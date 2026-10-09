@@ -1,0 +1,28 @@
+# Node / Vite
+node_modules/
+dist/
+*.local
+.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Pipeline download cache (raw source data)
+pipeline/.cache/
+
+# Test / tooling output
+coverage/
+test-results/
+playwright-report/
+.tmp/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
