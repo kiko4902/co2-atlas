@@ -30,13 +30,22 @@ const headed = args.includes("--headed");
 const measureOnly = args.includes("--measure-only");
 
 /** Throttled profile used for the "slow network" load time. */
-const SLOW_NETWORK = { latency: 70, downloadThroughput: (4 * 1024 * 1024) / 8, uploadThroughput: (1024 * 1024) / 8 };
+const SLOW_NETWORK = {
+  latency: 70,
+  downloadThroughput: (4 * 1024 * 1024) / 8,
+  uploadThroughput: (1024 * 1024) / 8,
+};
 
 const stats = (values) => {
   const sorted = [...values].sort((a, b) => a - b);
   const pick = (q) => sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
   const round = (v) => Math.round(v * 100) / 100;
-  return { n: values.length, median: round(pick(0.5)), p95: round(pick(0.95)), max: round(sorted.at(-1)) };
+  return {
+    n: values.length,
+    median: round(pick(0.5)),
+    p95: round(pick(0.95)),
+    max: round(sorted.at(-1)),
+  };
 };
 
 const server = await preview({ preview: { port: 4175, strictPort: true, host: "127.0.0.1" } });
@@ -59,7 +68,11 @@ async function ready(page) {
     if (r.status() >= 400) errors.push(`HTTP ${r.status()} ${r.url()}`);
     try {
       const body = await r.body();
-      resources.push({ url: r.url().replace(url, ""), bytes: body.length, gzip: gzipSync(body).length });
+      resources.push({
+        url: r.url().replace(url, ""),
+        bytes: body.length,
+        gzip: gzipSync(body).length,
+      });
     } catch {
       /* redirects have no body */
     }
@@ -68,7 +81,12 @@ async function ready(page) {
   await ready(page);
   await page.waitForTimeout(500);
   const sum = (filter) =>
-    resources.filter(filter).reduce((a, r) => ({ bytes: a.bytes + r.bytes, gzip: a.gzip + r.gzip }), { bytes: 0, gzip: 0 });
+    resources
+      .filter(filter)
+      .reduce((a, r) => ({ bytes: a.bytes + r.bytes, gzip: a.gzip + r.gzip }), {
+        bytes: 0,
+        gzip: 0,
+      });
   report.transfer = {
     data: sum((r) => r.url.startsWith("data/")),
     total: sum(() => true),
@@ -103,7 +121,6 @@ report.loadMs = {
   note: "Time from navigation to first interactive map. slow4Mbit: 4 Mbit/s, 70 ms latency, uncompressed (vite preview does not gzip; GitHub Pages does).",
 };
 
-
 /**
  * Real keyboard input on the slider, measured with the Event Timing API: the time from
  * a trusted key press to the next paint (script, style, layout and paint included),
@@ -117,7 +134,10 @@ async function sliderPaintTiming(page, moves, { noop = false } = {}) {
     new PerformanceObserver((list) => {
       for (const e of list.getEntries()) {
         if (!e.interactionId) continue;
-        window.__slow.set(e.interactionId, Math.max(window.__slow.get(e.interactionId) ?? 0, e.duration));
+        window.__slow.set(
+          e.interactionId,
+          Math.max(window.__slow.get(e.interactionId) ?? 0, e.duration),
+        );
       }
     }).observe({ type: "event", durationThreshold: 16, buffered: false });
   });
@@ -137,7 +157,13 @@ async function sliderPaintTiming(page, moves, { noop = false } = {}) {
     const index = Math.floor(q * moves) - (moves - sorted.length);
     return index < 0 ? "<16" : sorted[Math.min(sorted.length - 1, index)];
   };
-  return { interactions: moves, atLeast16ms: slow.length, median: p(0.5), p95: p(0.95), max: sorted.at(-1) ?? "<16" };
+  return {
+    interactions: moves,
+    atLeast16ms: slow.length,
+    median: p(0.5),
+    p95: p(0.95),
+    max: sorted.at(-1) ?? "<16",
+  };
 }
 
 // ---------- Slider timing ----------
@@ -215,7 +241,12 @@ if (measureOnly) {
 
 const VIEWPORTS = {
   desktop: { viewport: { width: 1440, height: 900 } },
-  mobile: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
+  mobile: {
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 2,
+  },
 };
 for (const [name, options] of Object.entries(VIEWPORTS)) {
   const context = await browser.newContext(options);
@@ -284,9 +315,17 @@ async function finish(file) {
   report.dataFiles = JSON.parse(
     readFileSync(new URL("public/data/manifest.json", root), "utf8"),
   ).outputs;
-  writeFileSync(new URL(file, root), JSON.stringify(report, null, 2) + "
-");
-  console.log(JSON.stringify({ ...report, transfer: report.transfer && { data: report.transfer.data, total: report.transfer.total } }, null, 2));
+  writeFileSync(new URL(file, root), `${JSON.stringify(report, null, 2)}\n`);
+  console.log(
+    JSON.stringify(
+      {
+        ...report,
+        transfer: report.transfer && { data: report.transfer.data, total: report.transfer.total },
+      },
+      null,
+      2,
+    ),
+  );
   if (report.consoleErrors.length) {
     console.error("Console errors:", report.consoleErrors);
     process.exitCode = 1;

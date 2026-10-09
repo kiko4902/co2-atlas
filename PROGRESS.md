@@ -30,7 +30,7 @@ Checklist za nastavak rada u novoj sesiji. `[x]` gotovo, `[~]` djelomično, `[ ]
   Izmjereno: handler slidera medijan 0,4 ms (stari 91 ms); input→paint (Event Timing, headless softverski raster)
   medijan 24 ms zatvoren panel / 16 ms otvoren, baseline <16; stari projekt medijan 104 ms.
   Podaci 1,08 MB (357 KB gz) vs stari 18,9 MB; učitavanje 4 Mbit/s: 1,16 s vs 37,1 s.
-- OTVORENO: `--headed --measure-only` pokretanje pada (exit 1, nije dijagnosticirano) — provjeriti
+- POPRAVLJENO: pad `--headed` pokretanja bila je sintaksna greška; ponovno pokrenuti headed mjerenje i
   `.tmp/verify-headed.out`. Ponovno pokrenuti verify nakon zadnje optimizacije (fill samo kad se promijeni).
 - PREOSTALO: Faza 3 (README, LICENSE, GitHub Actions ci/deploy/update-data s pinanim SHA, ruff već radi),
   Faza 4 (finalna verifikacija + status K/V iz AUDIT §9), SUMMARY.md, DECISIONS D6+ (paleta, Antarktika
