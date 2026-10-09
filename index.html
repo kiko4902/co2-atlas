@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CO₂ Atlas: fossil CO₂ emissions by country, 1950–2024</title>
+    <meta
+      name="description"
+      content="Interactive map of fossil CO₂ emissions for every country from 1950 to 2024, with emissions per person, world rank and a breakdown by coal, oil, gas, cement and flaring. Data: Global Carbon Project."
+    />
+    <meta name="theme-color" content="#fcfcfb" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://kiko4902.github.io/co2-atlas/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CO₂ Atlas: fossil CO₂ emissions by country, 1950–2024" />
+    <meta
+      property="og:description"
+      content="Explore 75 years of fossil CO₂ emissions by country: totals, per person, world rank and sources. Global Carbon Project data."
+    />
+    <meta property="og:url" content="https://kiko4902.github.io/co2-atlas/" />
+    <meta property="og:image" content="https://kiko4902.github.io/co2-atlas/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="World map of fossil CO₂ emissions by country in 2024" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip-link" href="#country-search">Skip to country search</a>
+
+    <header class="masthead">
+      <div class="masthead-title">
+        <h1>CO₂ Atlas</h1>
+        <p class="dek">Fossil CO₂ emissions by country, <span data-source-years>1950–2024</span></p>
+      </div>
+      <div class="search" role="search">
+        <label for="country-search" class="visually-hidden">Find a country</label>
+        <input
+          id="country-search"
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded="false"
+          aria-controls="country-search-list"
+          placeholder="Find a country"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <ul id="country-search-list" role="listbox" aria-label="Countries" hidden></ul>
+      </div>
+    </header>
+
+    <main id="stage" class="stage">
+      <div id="map" class="map"></div>
+
+      <div id="timebar" class="timebar">
+        <label for="year-slider" class="timebar-label">Year</label>
+        <output id="year-output" for="year-slider" class="timebar-year" aria-hidden="true"
+          >2024</output
+        >
+        <div class="timebar-track">
+          <input id="year-slider" type="range" step="1" min="1950" max="2024" value="2024" />
+          <div class="timebar-ends" aria-hidden="true">
+            <span id="year-range-start">1950</span><span id="year-range-end">2024</span>
+          </div>
+        </div>
+      </div>
+
+      <section id="legend" class="legend" aria-labelledby="legend-title">
+        <h2 id="legend-title" class="legend-title" data-legend-title>
+          Fossil CO₂ emissions, Mt CO₂
+        </h2>
+        <fieldset class="segmented">
+          <legend class="visually-hidden">Colour scale</legend>
+          <input type="radio" id="mode-fixed" name="scale-mode" value="fixed" checked />
+          <label for="mode-fixed">Fixed scale</label>
+          <input type="radio" id="mode-relative" name="scale-mode" value="relative" />
+          <label for="mode-relative">Relative to year</label>
+        </fieldset>
+        <ul class="legend-classes" data-legend-classes></ul>
+        <ul class="legend-status" data-legend-status></ul>
+        <p class="legend-note" data-legend-note></p>
+      </section>
+
+      <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+      <aside id="panel" class="panel" aria-labelledby="panel-title" hidden>
+        <div class="panel-header">
+          <button
+            type="button"
+            class="sheet-toggle"
+            data-sheet-toggle
+            aria-expanded="false"
+            aria-label="Expand details"
+          >
+            <span aria-hidden="true"></span>
+          </button>
+          <h2 id="panel-title" tabindex="-1" data-panel-title></h2>
+          <p class="panel-subtitle" data-panel-subtitle></p>
+          <button
+            type="button"
+            class="icon-button panel-close"
+            data-panel-close
+            aria-label="Close details"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M3 3l10 10M13 3L3 13" />
+            </svg>
+          </button>
+        </div>
+        <div class="panel-body">
+          <div class="panel-notice" data-panel-notice hidden></div>
+          <div data-panel-details>
+            <dl class="stats">
+              <div class="stat">
+                <dt>Total</dt>
+                <dd data-stat-total></dd>
+              </div>
+              <div class="stat">
+                <dt>Per person</dt>
+                <dd data-stat-percapita></dd>
+              </div>
+              <div class="stat">
+                <dt>World rank</dt>
+                <dd data-stat-rank></dd>
+              </div>
+              <div class="stat">
+                <dt>Share of world</dt>
+                <dd data-stat-share></dd>
+              </div>
+            </dl>
+            <section class="panel-section">
+              <h3 data-sources-title>By source</h3>
+              <div data-source-bars></div>
+              <p class="panel-note" data-sources-note></p>
+            </section>
+            <section class="panel-section">
+              <h3 data-chart-title>By source over time</h3>
+              <ul class="chart-legend" data-chart-legend aria-label="Chart legend"></ul>
+              <div data-area-chart></div>
+              <p class="panel-note">
+                Mt = million tonnes of CO₂. World share uses the global total, which includes
+                international aviation and shipping.
+              </p>
+            </section>
+          </div>
+        </div>
+      </aside>
+
+      <div id="app-status" class="app-status" role="status">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Loading emissions data…</p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Data: <a href="https://doi.org/10.5281/zenodo.17417124">Global Carbon Project</a>, fossil
+        CO₂ dataset <span data-source-version>2025v15</span> (CC BY 4.0) · Map:
+        <a href="https://www.naturalearthdata.com/">Natural Earth</a>
+      </p>
+      <p class="footer-links">
+        <button type="button" class="link-button" data-open-about>About &amp; sources</button>
+        <a data-csv href="data/co2-emissions-2025v15.csv" download>Download data (CSV)</a>
+        <a href="https://github.com/kiko4902/co2-atlas">Source code</a>
+      </p>
+    </footer>
+
+    <dialog id="about" class="about" aria-labelledby="about-title">
+      <div class="about-inner">
+        <button type="button" id="about-close" class="icon-button about-close" aria-label="Close">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <path d="M3 3l10 10M13 3L3 13" />
+          </svg>
+        </button>
+        <h2 id="about-title">About this atlas</h2>
+        <p>
+          The map shows fossil CO₂ emissions (coal, oil, gas, cement production and gas flaring) by
+          country and year. They are territorial emissions: counted where they happen, not where the
+          goods are consumed. Land-use change is not included.
+        </p>
+
+        <h3>Reading the map</h3>
+        <ul>
+          <li>
+            <strong>Fixed scale</strong> (default) uses the same six classes for every year, so a
+            colour means the same amount in 1950 and in 2024. Use it to compare years.
+          </li>
+          <li>
+            <strong>Relative to year</strong> recalculates the classes for the selected year so that
+            each holds about the same number of countries. Use it to compare countries within a
+            year. The same colour then means different amounts in different years.
+          </li>
+          <li>
+            <strong>0 Mt</strong> is a reported zero. <strong>No data</strong> means the dataset has
+            no estimate for that year. <strong>No separate data</strong> (hatched) means the
+            territory is not reported on its own.
+          </li>
+          <li>
+            Per person values and populations come from the Global Carbon Project (UN population
+            data). Shares of the world use the global total, which includes international aviation
+            and shipping. Those are not assigned to any country, so country shares add up to less
+            than 100%.
+          </li>
+        </ul>
+
+        <h3>Territories</h3>
+        <p>
+          The map shows what the Global Carbon Project reports separately. Kosovo, Greenland and the
+          Caribbean Netherlands have their own series and their own colour. French overseas regions
+          (French Guiana, Guadeloupe, Martinique, Réunion, Mayotte) and Monaco are included in
+          France, Western Sahara in Morocco and the Vatican in Italy. These are drawn as “no
+          separate data”. Somaliland and Northern Cyprus are shown as part of Somalia and Cyprus.
+          Antarctica is not drawn but can be found through the search. Borders are drawn for data
+          display and do not imply any position on disputed territories.
+        </p>
+
+        <h3>Sources</h3>
+        <ul class="citations">
+          <li>
+            Andrew, R. M. and Peters, G. P.: The Global Carbon Project's fossil CO₂ emissions
+            dataset, version <span data-source-version>2025v15</span>, Zenodo,
+            <a href="https://doi.org/10.5281/zenodo.17417124"
+              >https://doi.org/10.5281/zenodo.17417124</a
+            >, 2025. Licensed under
+            <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+          </li>
+          <li>
+            Friedlingstein, P. et al.: Global Carbon Budget 2025, Earth Syst. Sci. Data, 18,
+            3211–3288,
+            <a href="https://doi.org/10.5194/essd-18-3211-2026"
+              >https://doi.org/10.5194/essd-18-3211-2026</a
+            >, 2026.
+          </li>
+          <li>
+            Boundaries: <a href="https://www.naturalearthdata.com/">Natural Earth</a> 1:50m admin-0
+            countries and map units, v5.1.2 (public domain).
+          </li>
+        </ul>
+        <p>
+          The data is processed by a
+          <a href="https://github.com/kiko4902/co2-atlas/tree/main/pipeline"
+            >reproducible pipeline</a
+          >, which you can also
+          <a data-csv href="data/co2-emissions-2025v15.csv" download>download as CSV</a> (1750–2024,
+          all entities). Code is MIT-licensed.
+        </p>
+        <p class="about-origin">
+          Originally built as a university project (FERIT Osijek, 2025), then rebuilt and extended.
+        </p>
+      </div>
+    </dialog>
+
+    <div id="live-region" class="visually-hidden" aria-live="polite"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
