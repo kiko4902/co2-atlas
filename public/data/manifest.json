@@ -1,0 +1,194 @@
+{
+  "source": {
+    "title": "The Global Carbon Project's fossil CO2 emissions dataset",
+    "authors": "Andrew, R. M. and Peters, G. P.",
+    "version": "2025v15",
+    "published": "2025-10-22",
+    "doi": "10.5281/zenodo.17417124",
+    "zenodoRecord": 17417124,
+    "license": "CC BY 4.0",
+    "naturalEarth": "Natural Earth v5.1.2 (1:50m, public domain)"
+  },
+  "inputs": {
+    "GCB2025v15_MtCO2_flat.csv": "md5:3008e30d913af5926a83d0d0775fb72e",
+    "GCB2025v15_MtCO2_flat_metadata.json": "md5:ee6955d4409ea110c546ae38660b5592",
+    "GCB2025v15_percapita_flat.csv": "md5:946859158548b8b5dcc1f17a8b91363e",
+    "GCB2025v15_percapita_flat_metadata.json": "md5:5e2f91ae035ea14ac4317550c3ccbfa9",
+    "GCB2025v15_population_flat.csv": "md5:ca3796ef92541fb6b57b7309cfaf04f5",
+    "ne_50m_admin_0_countries.geojson": "md5:686def4ba546d1008ab4a75db581a81a",
+    "ne_50m_admin_0_map_units.geojson": "md5:190c08c1922608480633c7304102bcaf"
+  },
+  "outputs": {
+    "aggregates.json": 10030,
+    "co2-emissions-2025v15.csv": 3131256,
+    "countries.topo.json": 281362,
+    "emissions.json": 790098
+  },
+  "years": [
+    1750,
+    2024
+  ],
+  "appYears": [
+    1950,
+    2024
+  ],
+  "countries": 216,
+  "mapFeatures": 247,
+  "featuresWithoutData": [
+    {
+      "code": "ALA",
+      "name": "Åland",
+      "note": "no separate data"
+    },
+    {
+      "code": "ASM",
+      "name": "American Samoa",
+      "note": "no separate data"
+    },
+    {
+      "code": "ATC",
+      "name": "Ashmore and Cartier Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "ATF",
+      "name": "French Southern and Antarctic Lands",
+      "note": "no separate data"
+    },
+    {
+      "code": "BLM",
+      "name": "Saint Barthélemy",
+      "note": "no separate data"
+    },
+    {
+      "code": "CCK",
+      "name": "Cocos (Keeling) Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "CYM",
+      "name": "Cayman Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "ESH",
+      "name": "Western Sahara",
+      "note": "included in MAR"
+    },
+    {
+      "code": "FLK",
+      "name": "Falkland Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "GGY",
+      "name": "Guernsey",
+      "note": "no separate data"
+    },
+    {
+      "code": "GLP",
+      "name": "Guadeloupe",
+      "note": "included in FRA"
+    },
+    {
+      "code": "GUF",
+      "name": "French Guiana",
+      "note": "included in FRA"
+    },
+    {
+      "code": "GUM",
+      "name": "Guam",
+      "note": "no separate data"
+    },
+    {
+      "code": "HMD",
+      "name": "Heard Island and McDonald Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "IMN",
+      "name": "Isle of Man",
+      "note": "no separate data"
+    },
+    {
+      "code": "IOT",
+      "name": "British Indian Ocean Territory",
+      "note": "no separate data"
+    },
+    {
+      "code": "JEY",
+      "name": "Jersey",
+      "note": "no separate data"
+    },
+    {
+      "code": "KAS",
+      "name": "Siachen Glacier",
+      "note": "no separate data"
+    },
+    {
+      "code": "MAF",
+      "name": "Saint Martin",
+      "note": "no separate data"
+    },
+    {
+      "code": "MCO",
+      "name": "Monaco",
+      "note": "included in FRA"
+    },
+    {
+      "code": "MNP",
+      "name": "Northern Mariana Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "MTQ",
+      "name": "Martinique",
+      "note": "included in FRA"
+    },
+    {
+      "code": "MYT",
+      "name": "Mayotte",
+      "note": "included in FRA"
+    },
+    {
+      "code": "NFK",
+      "name": "Norfolk Island",
+      "note": "no separate data"
+    },
+    {
+      "code": "PCN",
+      "name": "Pitcairn Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "PRI",
+      "name": "Puerto Rico",
+      "note": "no separate data"
+    },
+    {
+      "code": "REU",
+      "name": "Réunion",
+      "note": "included in FRA"
+    },
+    {
+      "code": "SGS",
+      "name": "South Georgia and the South Sandwich Islands",
+      "note": "no separate data"
+    },
+    {
+      "code": "SMR",
+      "name": "San Marino",
+      "note": "no separate data"
+    },
+    {
+      "code": "VAT",
+      "name": "Vatican City",
+      "note": "included in ITA"
+    },
+    {
+      "code": "VIR",
+      "name": "United States Virgin Islands",
+      "note": "no separate data"
+    }
+  ]
+}
