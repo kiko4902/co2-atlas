@@ -9,12 +9,14 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
 import topojson
-from shapely.geometry import mapping, shape
+from shapely.geometry import MultiPolygon, Polygon, mapping, shape
 from shapely.geometry.base import BaseGeometry
+from shapely.geometry.polygon import orient
 from shapely.ops import unary_union
 
 from .config import GeoRules
@@ -121,6 +123,89 @@ def feature_status(
     raise GeoError(f"Feature {code} has no data and is not listed in [[geo.no_separate_data]]")
 
 
+def orient_for_d3(geometry: BaseGeometry) -> BaseGeometry:
+    """Clockwise exterior rings, as d3-geo expects (spherical winding).
+
+    GeoJSON (RFC 7946) and shapely use the opposite convention; d3 would then draw
+    each country as "the whole globe except the country".
+    """
+    if isinstance(geometry, Polygon):
+        return orient(geometry, sign=-1.0)
+    if isinstance(geometry, MultiPolygon):
+        return MultiPolygon([orient(p, sign=-1.0) for p in geometry.geoms])
+    raise GeoError(f"Unsupported geometry type {geometry.geom_type}")
+
+
+def decode_rings(
+    topology: dict[str, Any], all_rings: bool = False
+) -> dict[str, list[list[list[float]]]]:
+    """Decode exterior rings (or all rings, in order) of every polygon in a topology."""
+    transform = topology.get("transform")
+    arcs: list[list[list[float]]] = []
+    for arc in topology["arcs"]:
+        points, x, y = [], 0.0, 0.0
+        for dx, dy in arc:
+            if transform:
+                x, y = x + dx, y + dy
+                sx, sy = transform["scale"]
+                tx, ty = transform["translate"]
+                points.append([x * sx + tx, y * sy + ty])
+            else:
+                points.append([dx, dy])
+        arcs.append(points)
+
+    def ring(indexes: list[int]) -> list[list[float]]:
+        out: list[list[float]] = []
+        for i in indexes:
+            pts = arcs[i] if i >= 0 else arcs[~i][::-1]
+            out.extend(pts if not out else pts[1:])
+        return out
+
+    rings: dict[str, list[list[list[float]]]] = {}
+    for geom in topology["objects"]["countries"]["geometries"]:
+        polygons = [geom["arcs"]] if geom["type"] == "Polygon" else geom["arcs"]
+        rings[geom["properties"]["iso"]] = [
+            ring(r) for polygon in polygons for r in (polygon if all_rings else polygon[:1])
+        ]
+    return rings
+
+
+def signed_area(ring: list[list[float]]) -> float:
+    """Planar shoelace area; negative for clockwise rings (x east, y north)."""
+    return 0.5 * sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in pairwise(ring))
+
+
+def fix_winding(topology: dict[str, Any]) -> dict[str, Any]:
+    """Reverse rings whose orientation the topology builder flipped.
+
+    Happens for enclaves (Lesotho, exclaves of Armenia and Tajikistan) whose whole
+    boundary is one arc shared with a neighbour's hole. Exterior rings must be
+    clockwise and holes counter-clockwise for d3-geo.
+    """
+    rings_by_iso = decode_rings(topology, all_rings=True)
+    for geom in topology["objects"]["countries"]["geometries"]:
+        polygons = [geom["arcs"]] if geom["type"] == "Polygon" else geom["arcs"]
+        decoded = rings_by_iso[geom["properties"]["iso"]]
+        k = 0
+        for polygon in polygons:
+            for r, indexes in enumerate(polygon):
+                area = signed_area(decoded[k])
+                k += 1
+                exterior = r == 0
+                if (exterior and area > 0) or (not exterior and area < 0):
+                    polygon[r] = [~i for i in reversed(indexes)]
+    return topology
+
+
+def counter_clockwise_exteriors(topology: dict[str, Any]) -> list[str]:
+    """ISO codes whose exterior rings are not clockwise (would render inverted in d3)."""
+    bad = []
+    for iso, rings in decode_rings(topology).items():
+        if any(signed_area(r) > 0 for r in rings if len(r) >= 4):
+            bad.append(iso)
+    return sorted(bad)
+
+
 def to_topology(
     features: list[MapFeature],
     data_codes: set[str],
@@ -136,11 +221,11 @@ def to_topology(
         if target:
             props["includedIn"] = target
         collection["features"].append(
-            {"type": "Feature", "properties": props, "geometry": mapping(f.geometry)}
+            {"type": "Feature", "properties": props, "geometry": mapping(orient_for_d3(f.geometry))}
         )
 
     # Simplifying the shared arcs after building the topology keeps neighbouring borders
     # identical. (The library's `topoquantize`/`prevent_oversimplify` options are avoided:
     # they make the 1:50m build take minutes instead of under a second.)
     topo = topojson.Topology(collection, object_name="countries", prequantize=quantization)
-    return json.loads(topo.toposimplify(simplify_epsilon).to_json())
+    return fix_winding(json.loads(topo.toposimplify(simplify_epsilon).to_json()))

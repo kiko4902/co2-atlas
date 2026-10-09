@@ -6,6 +6,7 @@ from co2_pipeline.geo import (
     STATUS_NONE,
     GeoError,
     build_features,
+    counter_clockwise_exteriors,
     feature_status,
     to_topology,
 )
@@ -72,3 +73,11 @@ def test_topology_keeps_every_feature_and_its_properties(ne_countries, ne_map_un
     }
     assert props["ZZZ"]["status"] == "none"
     assert all(g.get("arcs") for g in geometries)
+
+
+def test_topology_rings_are_clockwise_for_d3(ne_countries, ne_map_units, config):
+    # The fixture squares are counter-clockwise, as in GeoJSON; output must be clockwise.
+    features = build_features(ne_countries, ne_map_units, config.geo)
+    included = {item.code: item.included_in for item in config.geo.no_separate_data}
+    topo = to_topology(features, {"AAA", "BBB", "GGG"}, included, 10_000, 0.0)
+    assert counter_clockwise_exteriors(topo) == []

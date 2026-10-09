@@ -11,7 +11,12 @@ from .config import DEFAULT_CONFIG, load_config
 from .download import fetch_gcp_release, fetch_natural_earth, file_digest
 from .emissions import KIND_COUNTRY, load_tidy
 from .export import export_all, write_text
-from .geo import build_features, load_feature_collection, to_topology
+from .geo import (
+    build_features,
+    counter_clockwise_exteriors,
+    load_feature_collection,
+    to_topology,
+)
 from .validate import validate
 
 DATASET_TITLE = "The Global Carbon Project's fossil CO2 emissions dataset"
@@ -43,6 +48,11 @@ def build(config_path: Path, offline: bool) -> int:
     topology = to_topology(
         features, data_codes, included, config.quantization, config.simplify_epsilon
     )
+
+    inverted = counter_clockwise_exteriors(topology)
+    if inverted:
+        print(f"Exterior rings not clockwise (would render inverted): {inverted}", file=sys.stderr)
+        return 1
 
     source = {
         "title": DATASET_TITLE,
