@@ -1,0 +1,6 @@
+dist/
+coverage/
+public/data/
+pipeline/
+package-lock.json
+*.md
