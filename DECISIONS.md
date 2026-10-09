@@ -81,3 +81,38 @@ Najveće revizije:
 **Zašto:** Node nije bio instaliran, a za Vite je nužan. Portable verzija ne traži admin prava ni UAC i ne mijenja sustav.
 
 **Alternative:** `winget install OpenJS.NodeJS.LTS` (traži UAC, a radim bez nadzora). Za vlastiti rad preporučujem normalnu instalaciju Node 24 LTS (`.nvmrc` u repozitoriju to navodi).
+
+## D3 — Alat za TopoJSON: Python paket `topojson` (bez `topoquantize`)
+
+**Što:** topologija se gradi Python paketom `topojson` (mattijn): `Topology(prequantize=1e5)` i zatim `.toposimplify(0.07)` (Douglas–Peucker na zajedničkim lukovima).
+
+**Zašto:** pipeline ostaje čisto Python + uv, kako je zadano. Pojednostavljivanje nakon izgradnje topologije čuva zajedničke granice bez rupa. Opcije `topoquantize=True` i `prevent_oversimplify=True` izgradnju 1:50m karte produljuju s <1 s na >10 min, pa se ne koriste.
+
+**Tolerancija 0,07°:** daje 275 KB (cilj < 300 KB). Za usporedbu: 0,03° → 388 KB, 0,05° → 315 KB, 0,1° → 244 KB. Nijedan feature ne nestaje (provjereno i za Monako, Vatikan, Bahrein, Maltu i Singapur, sve su prisutne).
+
+**Alternative:** mapshaper (Node, brži i standardan alat), ali to bi u Python pipeline uvelo Node ovisnost. Druga opcija je 1:110m karta, koja je manja, ali bez mnogih otoka i malih država.
+
+## D4 — Kodovi i imena na karti
+
+- **Kod:** primarno Natural Earth `ISO_A3_EH`. Nadjačavanja su u `config.toml`: Kosovo → `KSV`, a Siachen i Ashmore & Cartier dobivaju vlastite kodove (`KAS`, `ATC`), jer bi se inače sudarili s IND/AUS ili imali `-99`.
+- **Razdvajanje preko `admin_0_map_units`:**
+  - FRA → metropolitanska Francuska + 5 DOM-ova;
+  - NLD → Nizozemska + Karipska Nizozemska (`BES`, GCP je vodi zasebno);
+  - Indian Ocean Ter. → Christmas I. (`CXR`, GCP je vodi zasebno) + Cocos Is.
+- **Imena:** Natural Earth `NAME_EN` (uobičajeni engleski nazivi) uz 7 nadjačavanja prema GCP/UN nazivima (China, Czechia, Türkiye, Côte d'Ivoire, Timor-Leste, Micronesia, Cocos (Keeling) Islands). U aplikaciji se koristi isto ime na karti, u pretrazi i u panelu. CSV za preuzimanje zadržava originalne GCP nazive.
+- **Puerto Rico:** u 2025v15 nema zasebne serije, a GCP ne navodi gdje je uključen. Prikazuje se kao „No separate data“, bez tvrdnje „included in USA“.
+- **Rezultat:** 0 neuparenih GCP država, 31 feature bez zasebnih podataka (svi s razlogom u `config.toml`), od kojih 8 s dokumentiranim „included in“.
+
+## D5 — Format podataka za frontend
+
+**Što:** kolumnarni JSON po metrikama, matrica `values[metric][yearIndex][countryIndex]` (schema 1, opisana u `pipeline/README.md`). Brojevi su ručno serijalizirani s 5 značajnih znamenki (per capita s 4).
+
+**Zašto:** karta po godini čita jedan red, a panel po državi jedan stupac, oboje O(1). Nema ponavljanja ključeva po retku. Parsiranje 772 KB JSON-a traje nekoliko ms, a preko mreže je ~249 KB gz.
+
+**Raspon:** aplikacija dobiva 1950–2024. Puni raspon 1750–2024 (sve vrste entiteta, uključujući populaciju) izvozi se kao tidy CSV `co2-emissions-2025v15.csv`, koji je ujedno link „Download data“ u aplikaciji. Faza 2 (kumulativne emisije) može iz istog pipelinea dodati seriju bez promjene sheme.
+
+**Alternative:**
+- Jedan JSON po državi: puno zahtjeva.
+- Row-oriented JSON: oko 3× veći.
+- Arrow/Parquet: dodatna JS ovisnost za ~200 KB podataka.
+- Odvojeni `sources.json` za lijeno učitavanje: ušteda ~150 KB gz nije vrijedna dodatne složenosti.

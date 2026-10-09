@@ -15,13 +15,26 @@ Checklist za nastavak rada u novoj sesiji. `[x]` gotovo, `[~]` djelomično, `[ ]
 - [x] Zapisano u DECISIONS.md (D0, D1)
 
 ## Faza 1 — Data pipeline
-- [ ] Konfiguracija na jednom mjestu (`pipeline/config.toml`)
-- [ ] Preuzimanje s checksum provjerom (Zenodo + Natural Earth), cache u .gitignore
-- [ ] Čišćenje: države / agregati / povijesni entiteti; 0 ≠ null
-- [ ] Izvoz `public/data/` (shema u pipeline/README.md)
-- [ ] TopoJSON iz Natural Earth 1:50m < 300 KB, pravila za teritorije u kodu
-- [ ] Validacija (neupareni entiteti, iznimke, duplikati ISO, agregati)
-- [ ] pytest testovi s fixtureima
+- [x] Konfiguracija na jednom mjestu (`pipeline/config.toml`)
+- [x] Preuzimanje s checksum provjerom (Zenodo MD5 iz API-ja, Natural Earth SHA-256), cache u .gitignore
+- [x] Čišćenje: države / agregati / povijesni entiteti; 0 ≠ null
+- [x] Izvoz `public/data/` (shema u pipeline/README.md): emissions.json 772 KB (249 KB gz), aggregates.json 10 KB, CSV 1750–2024
+- [x] TopoJSON iz Natural Earth 1:50m: 275 KB (95 KB gz), 247 featurea, pravila za teritorije u kodu
+- [x] Validacija (neupareni entiteti, iznimke, zastarjele iznimke, duplikati ISO, agregati, per capita)
+- [x] pytest testovi s fixtureima (31 test), ruff čist
+- Pokretanje: `cd pipeline && uv run co2-pipeline build` (ili `--offline`)
+
+## STANJE PRI PREKIDU (sesija 1, 10. 10. 2026.)
+- Faze 0–1 gotove. Faza 2 gotova u kodu (svi moduli, 58 Vitest testova, 20 Playwright E2E testova prolaze).
+- `scripts/verify.mjs` radi (headless): docs/verification.json, docs/screenshots/*, demo.gif, public/og-image.png.
+  Izmjereno: handler slidera medijan 0,4 ms (stari 91 ms); input→paint (Event Timing, headless softverski raster)
+  medijan 24 ms zatvoren panel / 16 ms otvoren, baseline <16; stari projekt medijan 104 ms.
+  Podaci 1,08 MB (357 KB gz) vs stari 18,9 MB; učitavanje 4 Mbit/s: 1,16 s vs 37,1 s.
+- OTVORENO: `--headed --measure-only` pokretanje pada (exit 1, nije dijagnosticirano) — provjeriti
+  `.tmp/verify-headed.out`. Ponovno pokrenuti verify nakon zadnje optimizacije (fill samo kad se promijeni).
+- PREOSTALO: Faza 3 (README, LICENSE, GitHub Actions ci/deploy/update-data s pinanim SHA, ruff već radi),
+  Faza 4 (finalna verifikacija + status K/V iz AUDIT §9), SUMMARY.md, DECISIONS D6+ (paleta, Antarktika
+  se ne crta, dark mode izostavljen, udio svijeta uključuje bunkere, focus heuristika, PW_CHANNEL).
 
 ## Faza 2 — Frontend
 - [ ] Vite + npm projekt, d3-* paketi s fiksiranim verzijama

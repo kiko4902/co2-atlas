@@ -4,3 +4,6 @@ public/data/
 pipeline/
 package-lock.json
 *.md
+.tmp/
+test-results/
+playwright-report/

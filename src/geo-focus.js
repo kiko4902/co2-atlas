@@ -10,7 +10,7 @@
 /** Parts smaller than this fraction of the largest part never extend the focus box. */
 export const MIN_PART_SHARE = 0.02;
 /** A part joins the focus box if its gap to the box is below this fraction of the box diagonal. */
-export const MAX_GAP_RATIO = 0.35;
+export const MAX_GAP_RATIO = 0.6;
 
 /**
  * @param {Bounds} a
@@ -57,9 +57,22 @@ export function focusBounds(geometry, measure) {
   const [largest, ...rest] = parts;
   let box = largest.bounds;
   const diagonal = Math.hypot(box[1][0] - box[0][0], box[1][1] - box[0][1]);
-  for (const part of rest) {
-    if (part.area < largest.area * MIN_PART_SHARE) continue;
-    if (gapBetween(box, part.bounds) <= diagonal * MAX_GAP_RATIO) box = union(box, part.bounds);
+  // Repeat until stable, so island chains are joined through their middle islands
+  // (Luzon -> Visayas -> Mindanao) regardless of the order the parts are visited in.
+  let pending = rest.filter((part) => part.area >= largest.area * MIN_PART_SHARE);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    const next = [];
+    for (const part of pending) {
+      if (gapBetween(box, part.bounds) <= diagonal * MAX_GAP_RATIO) {
+        box = union(box, part.bounds);
+        grew = true;
+      } else {
+        next.push(part);
+      }
+    }
+    pending = next;
   }
   return box;
 }

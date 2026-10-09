@@ -73,7 +73,8 @@ export function createMap({
 
   const zoomLayer = svg.append("g").attr("class", "zoom-layer");
   const sphere = zoomLayer.append("path").attr("class", "sphere");
-  const countryLayer = zoomLayer.append("g").attr("class", "countries");
+  // Explicit -1: Chromium otherwise puts the group itself into the tab order.
+  const countryLayer = zoomLayer.append("g").attr("class", "countries").attr("tabindex", -1);
   const overlay = zoomLayer.append("g").attr("class", "outlines").attr("aria-hidden", "true");
   const hoverOutline = overlay.append("path").attr("class", "outline outline--hover");
   const selectedOutline = overlay.append("path").attr("class", "outline outline--selected");
@@ -105,6 +106,8 @@ export function createMap({
     .scaleExtent(SCALE_EXTENT)
     .on("zoom", (event) => {
       zoomLayer.attr("transform", event.transform);
+      // Keep the hatching at screen scale instead of growing with the map.
+      pattern.attr("patternTransform", `rotate(45) scale(${1 / event.transform.k})`);
       container.classList.toggle("is-zoomed", event.transform.k > 1.01);
     });
   svg.call(/** @type {any} */ (zoom));
@@ -218,11 +221,11 @@ export function createMap({
           .attr("fill", (d) => fillFor(d));
       } else {
         paths.interrupt();
+        // Most countries keep their class from one year to the next; touching only the
+        // ones that change keeps the repaint small while the slider is dragged.
         for (const node of /** @type {SVGPathElement[]} */ (paths.nodes())) {
-          node.setAttribute(
-            "fill",
-            fillFor(/** @type {CountryFeature} */ (/** @type {any} */ (node).__data__)),
-          );
+          const fill = fillFor(/** @type {CountryFeature} */ (/** @type {any} */ (node).__data__));
+          if (node.getAttribute("fill") !== fill) node.setAttribute("fill", fill);
         }
       }
     },
