@@ -1,0 +1,45 @@
+# Minimal configuration used by the unit tests.
+[gcp]
+zenodo_record_id = 1
+aggregate_codes = ["WLD", "XIA", "XIS", "XIT"]
+world_code = "WLD"
+
+[naturalearth]
+version = "test"
+base_url = "https://example.invalid"
+countries_file = "countries.geojson"
+countries_sha256 = "0"
+map_units_file = "map_units.geojson"
+map_units_sha256 = "0"
+
+[output]
+dir = "out"
+app_year_min = 2000
+sig_digits_mt = 5
+sig_digits_per_capita = 4
+
+[topology]
+quantization = 10000
+simplify_epsilon = 0.0
+max_bytes = 100000
+
+[geo.split]
+AAA = ["AAX", "AAO"]
+
+[geo.dissolve]
+BBS = "BBB"
+
+[geo.code_overrides]
+GGK = "GGG"
+
+[geo.names]
+GGG = "Gamma Republic"
+
+[[geo.no_separate_data]]
+code = "AAO"
+included_in = "AAA"
+reason = "Overseas part of Alpha, reported with Alpha."
+
+[[geo.no_separate_data]]
+code = "ZZZ"
+reason = "Uninhabited."

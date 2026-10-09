@@ -1,0 +1,13 @@
+Country,ISO 3166-1 alpha-3,UN M49,Year,Total,Coal,Oil,Gas,Cement,Flaring,Other
+Alpha,AAA,1,2000,5.0,3.0,2.0,0,0,0,
+Alpha,AAA,1,2001,6.0,3.5,2.5,0,0,0,
+Beta,BBB,2,2000,0,0,0,0,0,0,
+Beta,BBB,2,2001,,,,,,,
+Gamma,GGG,3,2000,1.5,,1.5,,,,0.2
+Gamma,GGG,3,2001,1.6,,1.6,,,,0.3
+Old Empire,,,2000,,,,,,,
+Old Empire,,,2001,,,,,,,
+Global,WLD,,2000,3.0,,,,,,
+Global,WLD,,2001,3.1,,,,,,
+International Aviation,XIA,,2000,,,,,,,
+International Aviation,XIA,,2001,,,,,,,

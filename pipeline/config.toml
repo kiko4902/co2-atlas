@@ -1,0 +1,215 @@
+# co2-atlas pipeline configuration.
+#
+# Updating to a new Global Carbon Project release (e.g. GCB2026) should only require
+# changing `gcp.zenodo_record_id` and re-running `uv run co2-pipeline build`.
+# File names, version string and checksums are read from the Zenodo API.
+
+[gcp]
+zenodo_record_id = 17417124
+# Codes that GCP uses for non-country rows. They are exported to aggregates.json
+# and must never reach the map. XIT was split into XIA/XIS in 2023 but is kept
+# here so older releases still validate.
+aggregate_codes = ["WLD", "XIA", "XIS", "XIT"]
+# Code of the world total used for "share of world".
+world_code = "WLD"
+
+[naturalearth]
+version = "v5.1.2"
+base_url = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector"
+countries_file = "ne_50m_admin_0_countries.geojson"
+countries_sha256 = "3e458fc036ad0a66411f2c1e6cac49c5d7bfb81cb1123bc513b22511a2b7fdeb"
+map_units_file = "ne_50m_admin_0_map_units.geojson"
+map_units_sha256 = "b8d421aca6e9e08e8cdf09cc26af111cc3e0deba4fe915611d58ade71e8a4db0"
+
+[output]
+dir = "../public/data"
+# Years shipped to the web app (the full 1750+ range goes to emissions-full.json).
+app_year_min = 1950
+# Significant digits kept in exported values.
+sig_digits_mt = 5
+sig_digits_per_capita = 4
+
+[topology]
+# Coordinate quantization (TopoJSON transform) and Douglas-Peucker tolerance in degrees.
+quantization = 100000
+simplify_epsilon = 0.07
+max_bytes = 300000
+
+# ---------------------------------------------------------------------------
+# Territory rules ("show what GCP reports separately")
+# ---------------------------------------------------------------------------
+
+# Natural Earth admin-0 features replaced by their map units, so that parts GCP
+# treats differently get their own polygon. Key: ADM0_A3 of the admin-0 feature,
+# value: GU_A3 codes of the map units that replace it.
+[geo.split]
+FRA = ["FXX", "GUF", "GLP", "MTQ", "REU", "MYT"]
+NLD = ["NLD", "NLY"]
+IOA = ["CXR", "CCK"]
+
+# Features merged into another feature (ADM0_A3 -> target code).
+[geo.dissolve]
+SOL = "SOM" # Somaliland -> Somalia
+CYN = "CYP" # Northern Cyprus -> Cyprus
+
+# Codes used when Natural Earth's ISO_A3_EH is missing (-99) or would collide.
+# Key: ADM0_A3 (or GU_A3 for map units).
+[geo.code_overrides]
+KOS = "KSV" # Kosovo: GCP uses KSV
+KAS = "KAS" # Siachen Glacier: disputed, no ISO code
+ATC = "ATC" # Ashmore and Cartier Is.: ISO_A3_EH would collide with Australia
+
+# Display names. Natural Earth's NAME_EN is used by default; these follow the
+# names used by the GCP dataset / UN where NAME_EN is outdated or too formal.
+[geo.names]
+CHN = "China"
+CZE = "Czechia"
+TUR = "Türkiye"
+CIV = "Côte d'Ivoire"
+TLS = "Timor-Leste"
+FSM = "Micronesia"
+CCK = "Cocos (Keeling) Islands"
+
+# Map features without a separate GCP series. Every unmatched feature must be
+# listed here, otherwise the build fails. `included_in` is only set where the GCP
+# methodology (PDF accompanying the dataset) says where the emissions are counted.
+[[geo.no_separate_data]]
+code = "GUF"
+included_in = "FRA"
+reason = "French overseas region; included in France since GCB2024 (GCP methodology §2.2.18)."
+
+[[geo.no_separate_data]]
+code = "GLP"
+included_in = "FRA"
+reason = "French overseas region; included in France since GCB2024 (GCP methodology §2.2.18)."
+
+[[geo.no_separate_data]]
+code = "MTQ"
+included_in = "FRA"
+reason = "French overseas region; included in France since GCB2024 (GCP methodology §2.2.18)."
+
+[[geo.no_separate_data]]
+code = "REU"
+included_in = "FRA"
+reason = "French overseas region; included in France since GCB2024 (GCP methodology §2.2.18)."
+
+[[geo.no_separate_data]]
+code = "MYT"
+included_in = "FRA"
+reason = "French overseas region; included in France since GCB2024 (GCP methodology §2.2.18)."
+
+[[geo.no_separate_data]]
+code = "MCO"
+included_in = "FRA"
+reason = "Monaco is combined with France (GCP methodology §2.2.18)."
+
+[[geo.no_separate_data]]
+code = "ESH"
+included_in = "MAR"
+reason = "Western Sahara's energy data are reported by Morocco (GCP methodology §2.4)."
+
+[[geo.no_separate_data]]
+code = "VAT"
+included_in = "ITA"
+reason = "The Holy See is included in Italy (GCP methodology §2.4)."
+
+[[geo.no_separate_data]]
+code = "KAS"
+reason = "Siachen Glacier: disputed area without a GCP series."
+
+[[geo.no_separate_data]]
+code = "ATC"
+reason = "Ashmore and Cartier Is.: uninhabited Australian territory without a GCP series."
+
+[[geo.no_separate_data]]
+code = "CCK"
+reason = "Cocos (Keeling) Is.: no GCP series (Christmas Island is reported separately)."
+
+[[geo.no_separate_data]]
+code = "PRI"
+reason = "Puerto Rico: reported separately until GCB2022, no separate series in later releases."
+
+[[geo.no_separate_data]]
+code = "ALA"
+reason = "Åland: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "SMR"
+reason = "San Marino: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "JEY"
+reason = "Jersey (Crown Dependency): no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "GGY"
+reason = "Guernsey (Crown Dependency): no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "IMN"
+reason = "Isle of Man (Crown Dependency): no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "CYM"
+reason = "Cayman Islands: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "FLK"
+reason = "Falkland Islands: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "SGS"
+reason = "South Georgia and the South Sandwich Islands: no permanent population, no GCP series."
+
+[[geo.no_separate_data]]
+code = "IOT"
+reason = "British Indian Ocean Territory: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "PCN"
+reason = "Pitcairn Islands: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "VIR"
+reason = "U.S. Virgin Islands: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "GUM"
+reason = "Guam: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "MNP"
+reason = "Northern Mariana Islands: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "ASM"
+reason = "American Samoa: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "MAF"
+reason = "Saint-Martin (French part): no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "BLM"
+reason = "Saint-Barthélemy: no separate GCP series."
+
+[[geo.no_separate_data]]
+code = "ATF"
+reason = "French Southern and Antarctic Lands: no permanent population, no GCP series."
+
+[[geo.no_separate_data]]
+code = "HMD"
+reason = "Heard I. and McDonald Is.: uninhabited, no GCP series."
+
+[[geo.no_separate_data]]
+code = "NFK"
+reason = "Norfolk Island: no separate GCP series."
+
+# GCP country rows that have no polygon on the 1:50m map. Every such row must be
+# listed here, otherwise the build fails. Format:
+#
+#   [[gcp.unmapped]]
+#   code = "XYZ"
+#   reason = "Why the country has no polygon."
+#
+# With Natural Earth 1:50m and the splits above, every GCP country is mapped.
