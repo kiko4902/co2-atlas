@@ -51,9 +51,22 @@ describe("published data", () => {
     expect(Object.keys(byIso)).not.toContain("-99");
   });
 
-  it("matches known values from the source CSV", () => {
-    // GCB2025v15_MtCO2_flat.csv: China 2024 Total = 12289.036755, Global 2024 = 38598.578033
-    expect(dataset.value("total", "CHN", 2024)).toBeCloseTo(12289, 0);
-    expect(dataset.world("total", 2024)).toBeCloseTo(38598.6, 0);
+  it("matches the published full-history CSV", () => {
+    const manifest = read("manifest.json");
+    const csv = readFileSync(
+      new URL(`../public/data/co2-emissions-${manifest.source.version}.csv`, import.meta.url),
+      "utf8",
+    ).split(/\r?\n/);
+    const header = csv[0].split(",");
+    const col = (name) => header.indexOf(name);
+    const last = dataset.yearRange[1];
+    const rows = csv.slice(1).map((line) => line.split(","));
+    for (const iso of ["CHN", "USA", "HRV", "WLD"]) {
+      const row = rows.find((r) => r[col("code")] === iso && Number(r[col("year")]) === last);
+      const expected = Number(row[col("total")]);
+      const actual =
+        iso === "WLD" ? dataset.world("total", last) : dataset.value("total", iso, last);
+      expect(actual).toBeCloseTo(expected, 6);
+    }
   });
 });

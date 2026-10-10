@@ -1,0 +1,69 @@
+name: Update data
+
+# Rebuilds public/data/ from another Global Carbon Project release on Zenodo and
+# opens a pull request. Requires "Allow GitHub Actions to create and approve pull
+# requests" (Settings -> Actions -> General).
+
+on:
+  workflow_dispatch:
+    inputs:
+      record_id:
+        description: "Zenodo record ID of the GCP fossil CO2 dataset (e.g. 17417124 for 2025v15)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      - name: Point the pipeline at the new record
+        env:
+          RECORD_ID: ${{ inputs.record_id }}
+        run: |
+          [[ "$RECORD_ID" =~ ^[0-9]+$ ]] || { echo "record_id must be numeric"; exit 1; }
+          sed -i -E "s/^zenodo_record_id = [0-9]+/zenodo_record_id = ${RECORD_ID}/" pipeline/config.toml
+          grep -n "^zenodo_record_id" pipeline/config.toml
+
+      - name: Build and validate data
+        working-directory: pipeline
+        run: |
+          uv sync --locked
+          uv run pytest
+          uv run co2-pipeline build | tee build-report.txt
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Check the app against the new data
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Read release version
+        id: release
+        run: echo "version=$(jq -r .source.version public/data/manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: data/gcp-${{ inputs.record_id }}
+          commit-message: "data: update to GCP fossil CO2 dataset ${{ steps.release.outputs.version }}"
+          title: "data: update to GCP fossil CO2 dataset ${{ steps.release.outputs.version }}"
+          body: |
+            Automated data update from Zenodo record ${{ inputs.record_id }} (release ${{ steps.release.outputs.version }}).
+
+            The pipeline validation and all unit tests passed. Before merging:
+            - review `public/data/manifest.json` (sources, sizes, features without data);
+            - check that the year slider range and the About text still fit;
+            - update the dataset citation in `index.html` if the DOI changed.
+          add-paths: |
+            pipeline/config.toml
+            public/data/
