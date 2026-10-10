@@ -116,3 +116,45 @@ Najveće revizije:
 - Row-oriented JSON: oko 3× veći.
 - Arrow/Parquet: dodatna JS ovisnost za ~200 KB podataka.
 - Odvojeni `sources.json` za lijeno učitavanje: ušteda ~150 KB gz nije vrijedna dodatne složenosti.
+
+## D6 — Klase i boje karte
+
+**Fiksni razredi (zadano):** `< 0,1 | 0,1–1 | 1–10 | 10–100 | 100–1 000 | ≥ 1 000` Mt CO₂, dakle 6 razreda po dekadama.
+
+**Zašto:** distribucija svih pozitivnih vrijednosti država 1950–2024 ima p10 ≈ 0,09, p20 ≈ 0,33, p40 ≈ 2,2, p60 ≈ 10, p80 ≈ 56, p90 ≈ 171 i p99 ≈ 1 710 Mt. Dekade daju razrede sa ~10/20/30/25/13/2 % vrijednosti i lako se čitaju. Razred ≥ 1 000 Mt namjerno ističe malu skupinu velikih emitera (SAD, Kina, Indija, Rusija, Japan…).
+
+**Relativni način:** kvantilne granice (6 razreda s podjednakim brojem država) za odabranu godinu. Računaju se samo iz država s vrijednošću > 0; agregati, 0 i null se ne uzimaju. Granice su zaokružene na najmanji broj značajnih znamenki uz koji ostaju strogo rastuće. Kvantili su izabrani zato što „relative to year“ treba pokazati poredak unutar godine, a log-jednaki intervali bi ovisili o ekstremima jedne godine.
+
+**Paleta:**
+- Jednobojna (crveno-narančasta) sekvencijalna ljestvica sa 6 koraka, generirana u OKLCH s monotonom svjetlinom. Validirana `dataviz` validatorom kao ordinalna ljestvica: najsvjetliji razred ima 2,03:1 prema pozadini (`#fcfcfb`), pa je vidljiv i bez obruba.
+- Izvori (Coal, Oil, Gas, Cement, Flaring, Other) dobivaju prvih 6 boja validirane kategoričke palete u fiksnom redoslijedu. Prolaze CVD i normalno razlikovanje. Tri boje imaju kontrast ispod 3:1, što se nadoknađuje vidljivim brojkama u tablici izvora.
+- Statusi:
+  - „No data“: siva `#d4d3ce`;
+  - „No separate data“: šrafura pod 45°, koja se pri zumu skalira s 1/k;
+  - „0 Mt“: bijela s obrubom.
+
+**Alternative:** YlOrRd (višebojna, nije potrebna); jedinstvena kontinuirana log skala (teže čitljiva legenda).
+
+## D7 — Ostale odluke u frontendu
+
+- **Antarktika se ne crta.** Zauzela bi ~20 % karte za 0,0x Mt. Ostaje dostupna kroz pretragu i panel (zoom je tada no-op).
+- **Udio u svijetu** računa se prema GCP „Global“ totalu, koji uključuje međunarodni zračni i pomorski promet (bunkere). Zato zbroj država daje < 100 %. Napomena stoji u panelu i u About dijalogu.
+- **Rang** je natjecateljski („1224“), samo među državama s vrijednošću za tu godinu.
+- **Zadana godina je 2024** (najnovija), a ne 1950.
+- **Zoom heuristika** (`geo-focus.js`) zamjenjuje ručne koordinate:
+  - uzima najveći poligon i spaja dijelove ≥ 2 % njegove površine kojima je razmak ≤ 0,6 dijagonale okvira;
+  - spaja se u više prolaza, pa se otočni lanci povezuju (Filipini, Malezija, Indonezija);
+  - provjereno na 22 države; SAD uključuje Aljasku, ali ne Havaje ni Guam.
+- **Zoom poštuje `scaleExtent` [1, 24]**, pa male države stanu na k = 24 i nema skoka pri prvom kotačiću.
+- **Bez tamnog načina** u ovoj verziji (opseg). Prijedlog za fazu 2.
+- **Tab redoslijed:** pretraga → slider → prekidač skale → države (abecedno) → panel. Skip link vodi na pretragu.
+- **Mjerenje performansi** (`scripts/verify.mjs`):
+  - Mjeri se i handler slidera (`performance.now`, kako traži zadatak) i put od pravog pritiska tipke do sljedećeg iscrtavanja (Event Timing API). Druga mjera je poštenija jer uključuje stil, layout i paint.
+  - Handler: 0,4 ms. Do iscrtavanja: medijan 24 ms sa zatvorenim panelom.
+  - Uzrok je iscrtavanje SVG-a s ~70 k vrhova, i u headless i u headed Edgeu. Optimizirano je postavljanjem `fill` samo kad se razred promijeni. Canvas renderiranje predloženo je za fazu 2.
+- **Playwright lokalno** koristi instalirani Edge (`PW_CHANNEL=msedge`), jer preuzimanje Playwrightova Chromiuma na ovom računalu nije uspjelo. CI koristi `playwright install chromium`.
+- **GIF** se generira u čistom JS-u (`gifenc` + `pngjs`) jer ffmpeg nije dostupan.
+
+## D8 — Citat Global Carbon Budget 2025
+
+Metadata JSON u datasetu i dalje navodi „Friedlingstein et al 2020 (DOI: 10.5194/essd-12-3269-2020)“. To je zastarjeli citat koji GCP prenosi iz izdanja u izdanje. Članak za 2025 objavljen je 13. 5. 2026.: Friedlingstein, P. et al., Global Carbon Budget 2025, *Earth Syst. Sci. Data*, 18, 3211–3288, doi:10.5194/essd-18-3211-2026 (provjereno na ESSD stranici članka). Aplikacija i README citiraju dataset (Andrew & Peters, Zenodo DOI) i taj članak.

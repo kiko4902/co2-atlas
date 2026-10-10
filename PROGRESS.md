@@ -3,9 +3,10 @@
 Checklist za nastavak rada u novoj sesiji. `[x]` gotovo, `[~]` djelomično, `[ ]` nije.
 
 **Okruženje (Windows):**
-- Node: `C:\Users\Kristian\AppData\Local\Programs\node-v24.21.0-win-x64` (portable, nije u PATH-u; u bashu: `export PATH="/c/Users/Kristian/AppData/Local/Programs/node-v24.21.0-win-x64:$PATH"`)
-- Python: preko `uv` (CPython 3.13, `pipeline/.python-version`)
-- Sirovi podaci: `pipeline/.cache/raw/` (gitignored)
+- Node: `C:\Users\Kristian\AppData\Local\Programs\node-v24.21.0-win-x64` (portable, nije u PATH-u). U bashu: `export PATH="/c/Users/Kristian/AppData/Local/Programs/node-v24.21.0-win-x64:$PATH"`.
+- Python preko `uv` (CPython 3.13, `pipeline/.python-version`).
+- Sirovi podaci: `pipeline/.cache/raw/` (gitignored).
+- Playwright lokalno: `PW_CHANNEL=msedge`.
 
 ## Faza 0 — Provjera podataka
 - [x] Preuzet GCB2025v15 sa Zenoda, MD5 provjeren
@@ -15,51 +16,63 @@ Checklist za nastavak rada u novoj sesiji. `[x]` gotovo, `[~]` djelomično, `[ ]
 - [x] Zapisano u DECISIONS.md (D0, D1)
 
 ## Faza 1 — Data pipeline
-- [x] Konfiguracija na jednom mjestu (`pipeline/config.toml`)
+- [x] Konfiguracija na jednom mjestu (`pipeline/config.toml`, jedan record ID)
 - [x] Preuzimanje s checksum provjerom (Zenodo MD5 iz API-ja, Natural Earth SHA-256), cache u .gitignore
 - [x] Čišćenje: države / agregati / povijesni entiteti; 0 ≠ null
-- [x] Izvoz `public/data/` (shema u pipeline/README.md): emissions.json 772 KB (249 KB gz), aggregates.json 10 KB, CSV 1750–2024
-- [x] TopoJSON iz Natural Earth 1:50m: 275 KB (95 KB gz), 247 featurea, pravila za teritorije u kodu
-- [x] Validacija (neupareni entiteti, iznimke, zastarjele iznimke, duplikati ISO, agregati, per capita)
-- [x] pytest testovi s fixtureima (31 test), ruff čist
-- Pokretanje: `cd pipeline && uv run co2-pipeline build` (ili `--offline`)
-
-## STANJE PRI PREKIDU (sesija 1, 10. 10. 2026.)
-- Faze 0–1 gotove. Faza 2 gotova u kodu (svi moduli, 58 Vitest testova, 20 Playwright E2E testova prolaze).
-- `scripts/verify.mjs` radi (headless): docs/verification.json, docs/screenshots/*, demo.gif, public/og-image.png.
-  Izmjereno: handler slidera medijan 0,4 ms (stari 91 ms); input→paint (Event Timing, headless softverski raster)
-  medijan 24 ms zatvoren panel / 16 ms otvoren, baseline <16; stari projekt medijan 104 ms.
-  Podaci 1,08 MB (357 KB gz) vs stari 18,9 MB; učitavanje 4 Mbit/s: 1,16 s vs 37,1 s.
-- POPRAVLJENO: pad `--headed` pokretanja bila je sintaksna greška; ponovno pokrenuti headed mjerenje i
-  `.tmp/verify-headed.out`. Ponovno pokrenuti verify nakon zadnje optimizacije (fill samo kad se promijeni).
-- PREOSTALO: Faza 3 (README, LICENSE, GitHub Actions ci/deploy/update-data s pinanim SHA, ruff već radi),
-  Faza 4 (finalna verifikacija + status K/V iz AUDIT §9), SUMMARY.md, DECISIONS D6+ (paleta, Antarktika
-  se ne crta, dark mode izostavljen, udio svijeta uključuje bunkere, focus heuristika, PW_CHANNEL).
+- [x] Izvoz `public/data/` (shema u pipeline/README.md)
+- [x] TopoJSON 1:50m: 275 KB, pravila za teritorije u kodu, smjer prstena ispravljen i validiran
+- [x] Validacija (neupareni entiteti, zastarjele iznimke, duplikati ISO, agregati, per capita, smjer prstena, veličina)
+- [x] pytest (32), ruff čist
 
 ## Faza 2 — Frontend
-- [ ] Vite + npm projekt, d3-* paketi s fiksiranim verzijama
-- [ ] Moduli: data, state, scales, map, legend, panel, charts/*, tooltip, format, a11y
-- [ ] Skala: fixed / relative, legenda iz iste skale
-- [ ] Karta: putanje jednom, fill na slider, non-scaling stroke, selected highlight, puna širina
-- [ ] Zoom: scaleExtent, svjesnost panela, najveći poligon
-- [ ] Panel: brojke, rang, udio, trake izvora, kombinirani graf s crosshairom
-- [ ] Format, loading, error
-- [ ] Pristupačnost: slider, fokus, Enter/Escape, combobox pretraga, tap tooltip, reduced motion
-- [ ] Mobitel: bottom sheet
-- [ ] Footer/About s citatima
-- [ ] Favicon, meta, OG
-- [ ] Vitest testovi
+- [x] Vite 8 + npm, d3-* paketi s fiksiranim verzijama
+- [x] Moduli: data, state, scales, map, legend, panel, charts/*, tooltip, search, format, a11y, geo-focus
+- [x] Skala fixed/relative, legenda iz iste skale, animira se samo fill
+- [x] Putanje se crtaju jednom; fill se mijenja samo kad se razred promijeni; non-scaling stroke; istaknuta odabrana država
+- [x] Zoom: scaleExtent, svjesnost panela i bottom sheeta, heuristika najvećeg poligona
+- [x] Panel: brojke, rang, udio, trake izvora s n/a, kombinirani graf s crosshairom i oznakom godine
+- [x] Formatiranje en-US, Mt/Gt; loading i error
+- [x] Pristupačnost: slider, fokus, Enter/Escape, combobox, tap tooltip, reduced motion, focus ring
+- [x] Mobitel: bottom sheet (50 %, može se proširiti)
+- [x] Footer/About s citatima i pravilom za teritorije; favicon, meta, OG slika
+- [x] Vitest (58)
 
 ## Faza 3 — Kvaliteta i repo
-- [ ] ESLint + Prettier + ruff bez upozorenja
-- [ ] README.md
-- [ ] LICENSE, .gitignore, .editorconfig
-- [ ] GitHub Actions: ci.yml, deploy.yml, update-data.yml (fiksirane verzije)
+- [x] ESLint + Prettier + tsc (JSDoc) + ruff bez upozorenja
+- [x] README.md (screenshot, GIF, mermaid, upute, citati)
+- [x] LICENSE (MIT), .gitignore, .editorconfig, .gitattributes, .nvmrc
+- [x] GitHub Actions: ci.yml, deploy.yml, update-data.yml (actions fiksirane na commit SHA)
 
 ## Faza 4 — Verifikacija
-- [ ] build + preview + Playwright (konzola, screenshotovi, klik test, tipkovnica, ms/slider, veličina podataka)
-- [ ] Svi testovi i linteri prolaze
-- [ ] Status K/V stavki iz AUDIT.md §9
+- [x] build + preview + Playwright: 20 E2E testova (konzola bez grešaka i 404, klik test za 10 država, slider, skala, tipkovnica, pretraga, touch)
+- [x] Vrijednosti iz klik testa provjerene i prema izvornom GCP CSV-u (razlika ≤ 2·10⁻⁵, zaokruživanje)
+- [x] Screenshotovi 1440×900 i 390×844 (2024, 1950, relative, selected) u `docs/screenshots/`, GIF i OG slika
+- [x] Mjerenja u `docs/verification.json` (headless) i `docs/verification-headed.json`
+- [x] Svi testovi i linteri prolaze
+
+### Status stavki iz AUDIT.md §9
+
+| # | Status | Napomena |
+|---|---|---|
+| K1 | riješeno | Agregati su u zasebnoj datoteci; skala ih nikad ne vidi (fiksne granice; relativne samo iz država). |
+| K2 | riješeno | Ime se uzima iz kliknutog featurea; svaki ISO kod je na jednom poligonu (validacija + E2E za Srbiju i Australiju). |
+| K3 | riješeno | Kosovo je zaseban poligon s kodom `KSV` i vlastitim podacima. |
+| K4 | riješeno | Legenda se generira iz iste skale; nema sive na početku; posebni kvadratići za 0 / no data / no separate data. |
+| K5 | riješeno | 6 razreda od < 0,1 Mt naviše; male države se razlikuju. |
+| K6 | riješeno | About/footer/README s citatima i CC BY 4.0; MIT LICENSE. |
+| K7 | riješeno | Bottom sheet, zoom iznad sheeta, tap tooltip; E2E na 390×844. |
+| V1 | riješeno | Karta je puna širina; panel je overlay, a zoom uzima u obzir njegovu širinu. |
+| V2 | riješeno | Handler slidera 0,4 ms (bio 91 ms). Do iscrtavanja medijan 24 ms sa zatvorenim panelom (bio 104 ms); vidi D7. |
+| V3 | riješeno | 1,08 MB podataka (357 KB gz) umjesto 18,9 MB; neiskorištene karte se ne prenose. |
+| V4 | riješeno | `vector-effect: non-scaling-stroke`; šrafura se skalira s 1/k. |
+| V5 | riješeno | 0 je bijelo „0 Mt“, null je sivo „No data“. |
+| V6 | riješeno | Fiksna skala je zadana; relativna je izborna i jasno označena. |
+| V7 | riješeno | DOM-ovi su zasebni poligoni sa „included in France“. |
+| V8 | riješeno | Tipkovnica, ARIA, combobox, focus ring, reduced motion (bez tamnog načina, D7). |
+| V9 | riješeno | Loading indikator i poruka s gumbom „Reload“. |
+| V10 | riješeno | Pipeline s checksumima, validacijom i testovima. |
+| V11 | riješeno | GCB2025v15, podaci do 2024. |
+| V12 | riješeno | Programski zoom je ograničen na scaleExtent [1, 24]. |
 
 ## Završni izvještaj
-- [ ] SUMMARY.md
+- [x] SUMMARY.md
