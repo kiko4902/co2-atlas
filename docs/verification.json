@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-10T01:42:00.475Z",
+  "date": "2026-10-10T12:05:12.873Z",
   "browser": "msedge",
   "headed": false,
   "url": "http://127.0.0.1:4175/co2-atlas/",
@@ -9,8 +9,8 @@
       "gzip": 357411
     },
     "total": {
-      "bytes": 1223334,
-      "gzip": 406314
+      "bytes": 1230649,
+      "gzip": 408483
     },
     "resources": [
       {
@@ -24,19 +24,19 @@
         "gzip": 97579
       },
       {
-        "url": "assets/index-Ci_AMuG2.js",
-        "bytes": 116514,
-        "gzip": 41134
+        "url": "assets/index-6D2n0Cg1.js",
+        "bytes": 121245,
+        "gzip": 42789
       },
       {
-        "url": "assets/index-HsGnZLMn.css",
-        "bytes": 13552,
-        "gzip": 3968
+        "url": "assets/index-6d3Nv7VE.css",
+        "bytes": 14393,
+        "gzip": 4128
       },
       {
         "url": "",
-        "bytes": 11371,
-        "gzip": 3546
+        "bytes": 13114,
+        "gzip": 3900
       },
       {
         "url": "data/aggregates.json",
@@ -54,15 +54,15 @@
   "loadMs": {
     "localhost": {
       "n": 3,
-      "median": 172,
-      "p95": 175,
-      "max": 175
+      "median": 174,
+      "p95": 181,
+      "max": 181
     },
     "slow4Mbit": {
       "n": 3,
-      "median": 1140,
-      "p95": 1158,
-      "max": 1158
+      "median": 1164,
+      "p95": 1175,
+      "max": 1175
     },
     "note": "Time from navigation to first interactive map. slow4Mbit: 4 Mbit/s, 70 ms latency, uncompressed (vite preview does not gzip; GitHub Pages does)."
   },
@@ -70,16 +70,22 @@
     "panelClosed": {
       "n": 150,
       "median": 0.4,
-      "p95": 0.6,
-      "max": 1.3
+      "p95": 0.5,
+      "max": 1.2
     },
     "panelOpen": {
+      "n": 150,
+      "median": 0.4,
+      "p95": 0.6,
+      "max": 1
+    },
+    "note": "performance.now() around one synchronous 'input' event (store update + render), 150 moves each.",
+    "perCapitaPanelClosed": {
       "n": 150,
       "median": 0.3,
       "p95": 0.5,
       "max": 0.8
-    },
-    "note": "performance.now() around one synchronous 'input' event (store update + render), 150 moves each."
+    }
   },
   "sliderToPaint": {
     "panelOpen": {
@@ -92,50 +98,27 @@
     "panelClosed": {
       "interactions": 60,
       "atLeast16ms": 60,
-      "median": 24,
+      "median": 16,
       "p95": 32,
       "max": 32
     },
     "baselineNoChange": {
       "interactions": 30,
-      "atLeast16ms": 1,
+      "atLeast16ms": 0,
       "median": "<16",
       "p95": "<16",
-      "max": 24
+      "max": "<16"
+    },
+    "perCapitaPanelClosed": {
+      "interactions": 60,
+      "atLeast16ms": 30,
+      "median": 16,
+      "p95": 24,
+      "max": 32
     },
     "note": "Event Timing API, trusted key presses, ms from input to next paint per interaction. Headless browsers rasterise in software, so paint is slower than on a desktop GPU; compare with the baseline."
   },
-  "old": {
-    "url": "http://127.0.0.1:8765/",
-    "loadMs": {
-      "localhost": {
-        "n": 3,
-        "median": 563,
-        "p95": 607,
-        "max": 607
-      },
-      "slow4Mbit": {
-        "n": 3,
-        "median": 37432,
-        "p95": 37448,
-        "max": 37448
-      }
-    },
-    "sliderToPaint": {
-      "interactions": 60,
-      "atLeast16ms": 31,
-      "median": 104,
-      "p95": 128,
-      "max": 136
-    },
-    "sliderMs": {
-      "n": 72,
-      "median": 92.4,
-      "p95": 106.8,
-      "max": 133.6
-    }
-  },
-  "gifBytes": 1603392,
+  "gifBytes": 1645530,
   "dataFiles": {
     "aggregates.json": 10030,
     "co2-emissions-2025v15.csv": 3131256,

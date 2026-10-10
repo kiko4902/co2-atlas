@@ -204,6 +204,11 @@ async function sliderTiming(page, setup) {
   await page.waitForTimeout(700);
   report.sliderToPaint.panelClosed = await sliderPaintTiming(page, 60);
   report.sliderToPaint.baselineNoChange = await sliderPaintTiming(page, 30, { noop: true });
+  // Same measurements with the per-capita metric on the map.
+  await page.evaluate(() => window.__co2.store.set({ metric: "perCapita" }));
+  await page.waitForTimeout(700);
+  report.sliderMs.perCapitaPanelClosed = stats(await sliderTiming(page));
+  report.sliderToPaint.perCapitaPanelClosed = await sliderPaintTiming(page, 60);
   report.sliderToPaint.note =
     "Event Timing API, trusted key presses, ms from input to next paint per interaction. Headless browsers rasterise in software, so paint is slower than on a desktop GPU; compare with the baseline.";
   await page.close();
