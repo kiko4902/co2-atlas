@@ -1,6 +1,7 @@
 {
-  "date": "2026-10-09T23:26:21.127Z",
+  "date": "2026-10-10T01:42:00.475Z",
   "browser": "msedge",
+  "headed": false,
   "url": "http://127.0.0.1:4175/co2-atlas/",
   "transfer": {
     "data": {
@@ -53,15 +54,15 @@
   "loadMs": {
     "localhost": {
       "n": 3,
-      "median": 167,
-      "p95": 172,
-      "max": 172
+      "median": 172,
+      "p95": 175,
+      "max": 175
     },
     "slow4Mbit": {
       "n": 3,
-      "median": 1162,
-      "p95": 1165,
-      "max": 1165
+      "median": 1140,
+      "p95": 1158,
+      "max": 1158
     },
     "note": "Time from navigation to first interactive map. slow4Mbit: 4 Mbit/s, 70 ms latency, uncompressed (vite preview does not gzip; GitHub Pages does)."
   },
@@ -70,13 +71,13 @@
       "n": 150,
       "median": 0.4,
       "p95": 0.6,
-      "max": 0.8
+      "max": 1.3
     },
     "panelOpen": {
       "n": 150,
-      "median": 0.4,
+      "median": 0.3,
       "p95": 0.5,
-      "max": 0.9
+      "max": 0.8
     },
     "note": "performance.now() around one synchronous 'input' event (store update + render), 150 moves each."
   },
@@ -97,10 +98,10 @@
     },
     "baselineNoChange": {
       "interactions": 30,
-      "atLeast16ms": 0,
+      "atLeast16ms": 1,
       "median": "<16",
       "p95": "<16",
-      "max": "<16"
+      "max": 24
     },
     "note": "Event Timing API, trusted key presses, ms from input to next paint per interaction. Headless browsers rasterise in software, so paint is slower than on a desktop GPU; compare with the baseline."
   },
@@ -109,15 +110,15 @@
     "loadMs": {
       "localhost": {
         "n": 3,
-        "median": 527,
-        "p95": 532,
-        "max": 532
+        "median": 563,
+        "p95": 607,
+        "max": 607
       },
       "slow4Mbit": {
         "n": 3,
-        "median": 37398,
-        "p95": 37468,
-        "max": 37468
+        "median": 37432,
+        "p95": 37448,
+        "max": 37448
       }
     },
     "sliderToPaint": {
@@ -125,13 +126,13 @@
       "atLeast16ms": 31,
       "median": 104,
       "p95": 128,
-      "max": 144
+      "max": 136
     },
     "sliderMs": {
       "n": 72,
-      "median": 90,
-      "p95": 98.8,
-      "max": 107.3
+      "median": 92.4,
+      "p95": 106.8,
+      "max": 133.6
     }
   },
   "gifBytes": 1603392,
