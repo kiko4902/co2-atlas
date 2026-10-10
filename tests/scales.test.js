@@ -57,7 +57,7 @@ describe("fixed scale", () => {
       "1–10",
       "10–100",
       "100–1,000",
-      "≥ 1,000 Mt CO₂",
+      "≥ 1,000 Mt\u00a0CO₂",
     ]);
   });
 });
@@ -95,16 +95,61 @@ describe("relative scale", () => {
   it("fails loudly with too few values", () => {
     expect(() => relativeThresholds([1, 2, 0, null])).toThrow();
   });
+});
 
-  it("supports other metrics (per capita)", () => {
-    const scale = createColorScale({
-      metric: "perCapita",
+describe("per-capita scale", () => {
+  // t CO2 per person: zeros, missing (no population), small values and outliers.
+  const perCapita = [0, null, 0.05, 0.3, 0.8, 1.6, 2, 3.4, 4.7, 6.1, 8, 12, 15, 22, 41, 790];
+  /** @param {"fixed" | "relative"} mode */
+  const make = (mode, year = 2024, values = perCapita) =>
+    createColorScale({ metric: "perCapita", mode, year, yearRange: [1950, 2024], values });
+
+  it("fixed: uses the per-capita classes, not the Mt decades", () => {
+    const scale = make("fixed");
+    expect(scale.thresholds).toEqual([0.5, 1, 2.5, 5, 10]);
+    expect(scale.thresholds).toEqual(MAP_METRICS.perCapita.fixedThresholds);
+    expect(scale.labels).toEqual(["< 0.5", "0.5–1", "1–2.5", "2.5–5", "5–10", "≥ 10 t\u00a0CO₂"]);
+    expect(make("fixed", 1950, [1, 2, 3, 4, 5, 6]).thresholds).toEqual(scale.thresholds);
+  });
+
+  it("fixed: open top class absorbs outliers from tiny populations", () => {
+    const scale = make("fixed");
+    expect(scale.classify(10)).toBe(5);
+    expect(scale.classify(41)).toBe(5);
+    expect(scale.classify(790)).toBe(5);
+    expect(scale.classify(4.7)).toBe(3);
+  });
+
+  it("fixed: zero and missing per capita stay distinct", () => {
+    const scale = make("fixed");
+    expect(scale.classify(0)).toBe("zero");
+    expect(scale.classify(null)).toBe("nodata");
+    expect(scale.fill(null)).toBe(STATUS_FILL.nodata);
+    expect(scale.fill(0)).toBe(STATUS_FILL.zero);
+  });
+
+  it("relative: quantile classes for the year, robust to one huge outlier", () => {
+    const scale = make("relative");
+    expect(scale.thresholds).toHaveLength(CLASS_COUNT - 1);
+    expect(scale.description).toContain("relative to 2024");
+    expect(scale.labels.at(-1)).toMatch(/ t\u00a0CO₂$/);
+    const withoutOutlier = make("relative", 2024, perCapita.slice(0, -1).concat(42));
+    expect(withoutOutlier.thresholds).toEqual(scale.thresholds);
+  });
+
+  it("is a function of (metric, mode, year)", () => {
+    const a = make("relative", 1990, [0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4, 12.8]);
+    const b = make("relative", 1990, [1, 2, 4, 8, 16, 32, 64, 128]);
+    expect(a.thresholds).not.toEqual(b.thresholds);
+    expect(make("fixed", 1990).thresholds).toEqual(make("fixed", 2010).thresholds);
+    const total = createColorScale({
+      metric: "total",
       mode: "fixed",
-      year: 2024,
+      year: 1990,
       yearRange: [1950, 2024],
-      values: [],
+      values: perCapita,
     });
-    expect(scale.labels.at(-1)).toBe("≥ 10 t CO₂ per person");
+    expect(total.thresholds).not.toEqual(make("fixed", 1990).thresholds);
   });
 });
 

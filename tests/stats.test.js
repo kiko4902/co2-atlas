@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rankOf, shareOfWorld, sourceShares } from "../src/stats.js";
+import { comparison, rankOf, ratioToWorld, shareOfWorld, sourceShares } from "../src/stats.js";
 
 describe("rankOf", () => {
   it("ranks highest first among non-null values", () => {
@@ -32,5 +32,46 @@ describe("shares", () => {
       other: null,
     });
     expect(sourceShares({ coal: 0 }, null)).toEqual({ coal: null });
+  });
+});
+
+describe("comparison for the active metric", () => {
+  const totals = [100, 10, null, 50];
+  const perCapita = [2, 20, null, 5];
+
+  it("total: rank by total and share of the world", () => {
+    expect(comparison({ metric: "total", values: totals, index: 3, world: 200 })).toEqual({
+      metric: "total",
+      rank: { rank: 2, count: 3 },
+      share: 0.25,
+    });
+  });
+
+  it("per capita: rank by per capita and the world average, no share", () => {
+    const c = comparison({ metric: "perCapita", values: perCapita, index: 3, world: 4 });
+    expect(c).toEqual({
+      metric: "perCapita",
+      rank: { rank: 2, count: 3 },
+      worldAverage: 4,
+      ratio: 1.25,
+    });
+    expect(c).not.toHaveProperty("share");
+  });
+
+  it("missing per capita has no rank and no ratio", () => {
+    expect(comparison({ metric: "perCapita", values: perCapita, index: 2, world: 4 })).toEqual({
+      metric: "perCapita",
+      rank: null,
+      worldAverage: 4,
+      ratio: null,
+    });
+  });
+
+  it("ratio to the world average", () => {
+    expect(ratioToWorld(9, 4.5)).toBe(2);
+    expect(ratioToWorld(0, 4.5)).toBe(0);
+    expect(ratioToWorld(null, 4.5)).toBeNull();
+    expect(ratioToWorld(3, 0)).toBeNull();
+    expect(ratioToWorld(3, null)).toBeNull();
   });
 });

@@ -4,6 +4,8 @@ import { geoArea } from "d3-geo";
 import { feature } from "topojson-client";
 import { describe, expect, it } from "vitest";
 import { Dataset, checkSeriesFile } from "../src/data.js";
+import { MAP_METRICS } from "../src/scales.js";
+import { comparison } from "../src/stats.js";
 
 const read = (name) =>
   JSON.parse(readFileSync(new URL(`../public/data/${name}`, import.meta.url), "utf8"));
@@ -63,10 +65,64 @@ describe("published data", () => {
     const rows = csv.slice(1).map((line) => line.split(","));
     for (const iso of ["CHN", "USA", "HRV", "WLD"]) {
       const row = rows.find((r) => r[col("code")] === iso && Number(r[col("year")]) === last);
-      const expected = Number(row[col("total")]);
-      const actual =
-        iso === "WLD" ? dataset.world("total", last) : dataset.value("total", iso, last);
-      expect(actual).toBeCloseTo(expected, 6);
+      for (const [metric, column] of [
+        ["total", "total"],
+        ["perCapita", "per_capita"],
+      ]) {
+        const expected = Number(row[col(column)]);
+        const actual =
+          iso === "WLD" ? dataset.world(metric, last) : dataset.value(metric, iso, last);
+        expect(actual).toBeCloseTo(expected, 6);
+      }
     }
+  });
+});
+
+describe("published per-capita data", () => {
+  const last = dataset.yearRange[1];
+
+  it("has a world average for every year, equal to world total / population", () => {
+    for (const year of dataset.years) {
+      const avg = dataset.world("perCapita", year);
+      expect(avg).toBeGreaterThan(2);
+      expect(avg).toBeLessThan(6);
+    }
+    expect(dataset.world("perCapita", last)).toBeCloseTo(4.73, 2);
+  });
+
+  it("keeps missing per capita (no population) as null, not 0", () => {
+    // Christmas Island has emissions but no population series.
+    expect(dataset.value("total", "CXR", last)).not.toBeNull();
+    expect(dataset.value("perCapita", "CXR", last)).toBeNull();
+  });
+
+  it("puts the extreme small-population values in the open top class", () => {
+    const top = MAP_METRICS.perCapita.fixedThresholds.at(-1);
+    let max = 0;
+    for (const year of dataset.years) {
+      for (const v of dataset.row("perCapita", year)) if (v != null) max = Math.max(max, v);
+    }
+    expect(max).toBeGreaterThan(100); // Sint Maarten in the 1950s
+    expect(top).toBeLessThan(20);
+  });
+
+  it("ranks per capita separately from total", () => {
+    const index = /** @type {number} */ (dataset.indexByIso.get("CHN"));
+    const byTotal = comparison({
+      metric: "total",
+      values: dataset.row("total", last),
+      index,
+      world: dataset.world("total", last),
+    });
+    const byPerson = comparison({
+      metric: "perCapita",
+      values: dataset.row("perCapita", last),
+      index,
+      world: dataset.world("perCapita", last),
+    });
+    expect(byTotal.rank?.rank).toBe(1);
+    expect(byPerson.rank?.rank).toBeGreaterThan(10);
+    expect(byPerson.rank?.count).toBeLessThan(byTotal.rank?.count ?? 0); // no population, no rank
+    expect("ratio" in byPerson && byPerson.ratio).toBeGreaterThan(1);
   });
 });
