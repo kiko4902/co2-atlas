@@ -158,3 +158,67 @@ Najveće revizije:
 ## D8 — Citat Global Carbon Budget 2025
 
 Metadata JSON u datasetu i dalje navodi „Friedlingstein et al 2020 (DOI: 10.5194/essd-12-3269-2020)“. To je zastarjeli citat koji GCP prenosi iz izdanja u izdanje. Članak za 2025 objavljen je 13. 5. 2026.: Friedlingstein, P. et al., Global Carbon Budget 2025, *Earth Syst. Sci. Data*, 18, 3211–3288, doi:10.5194/essd-18-3211-2026 (provjereno na ESSD stranici članka). Aplikacija i README citiraju dataset (Andrew & Peters, Zenodo DOI) i taj članak.
+
+## D9 — Razredi za per capita
+
+**Što:** fiksni razredi `< 0,5 | 0,5–1 | 1–2,5 | 2,5–5 | 5–10 | ≥ 10` t CO₂ po osobi. Relativni način koristi iste kvantile kao za total (6 razreda, samo vrijednosti > 0).
+
+**Zašto:**
+- Distribucija svih vrijednosti država 1950–2024 (15 181 vrijednost, 14 pravih nula): p10 ≈ 0,11, p30 ≈ 0,58, p40 ≈ 1,09, p50 ≈ 1,94, p60 ≈ 3,28, p70 ≈ 5,14, p80 ≈ 7,59, p90 ≈ 11,3, p95 ≈ 16,6, p99 ≈ 38,6, maksimum 793 t.
+- Usporedba kandidata (udio vrijednosti po razredu, 1950–2024):
+
+| Granice | Udjeli | 1950 | 2024 |
+|---|---|---|---|
+| 1 / 2,5 / 5 / 10 / 20 (prijedlog iz zadatka) | 38/16/14/18/9/4 % | 59/16/12/8/3/2 | 25/18/25/20/8/3 |
+| 0,5 / 2 / 5 / 10 / 20 | 28/23/19/18/9/4 % | 49/24/14/8/3/2 | 16/21/31/20/8/3 |
+| **0,5 / 1 / 2,5 / 5 / 10 (odabrano)** | **28/11/16/14/18/13 %** | 49/10/16/12/8/5 | 16/9/18/25/20/12 |
+
+- Prijedlog iz zadatka stavlja 38 % svih vrijednosti (59 % u 1950.) u najniži razred, pa se siromašne države ne razlikuju. Gornji razred ≥ 20 t imao bi samo ~4 % vrijednosti.
+- Odabrane granice daju najujednačeniju raspodjelu i slijede niz 1–2,5–5 koji se lako čita. Svjetski prosjek (2,4 t u 1950., 4,7 t u 2024.) pada u razred 2,5–5 ili tik ispod, pa „iznad prosjeka“ otprilike znači „5 t i više“.
+
+**Outlieri (sve vrijednosti > 30 t):**
+- Sint Maarten 1950-ih (do 793 t) i Curaçao 1950–2000-ih (do 117 t): rafinerije na otocima s malom populacijom.
+- Katar (do 122 t), UAE (86), Kuvajt (68), Brunej (68), Trinidad i Tobago (34): proizvodnja nafte i plina, flaring.
+- Luksemburg (do 41 t, čeličane i „gorivni turizam“), Bahami (44) i Karipska Nizozemska (34).
+
+Podaci se ne izbacuju ni ne režu. Gornji razred je otvoren (`≥ 10`), pa outlieri ne razvlače fiksnu skalu. Kvantilne granice relativnog načina ionako ne ovise o maksimumu (unit test to provjerava). Točne vrijednosti uvijek su u tooltipu i panelu.
+
+**Bez populacije:** Christmas Island (CXR) i Antarktika imaju emisije, ali nemaju populaciju, pa per capita ima vrijednost `null` i prikazuje se kao „No data“, a ne 0. Nula per capita postoji samo gdje je i total stvarna nula.
+
+**Alternative:** 7 razreda (paleta je validirana za 6); kontinuirana log skala (teža za čitanje legende).
+
+## D10 — Stanje u URL-u
+
+- **Parametri:** `country` (ISO3), `year`, `metric` (`total` | `percapita`), `scale` (`fixed` | `relative`). Redoslijed u URL-u je country, year, metric, scale. Zadane vrijednosti (2024, total, fixed, bez države) izostavljaju se.
+- **Interno ime ostaje `perCapita`**, a u URL-u je `percapita` (bez velikih slova). Vrijednosti se čitaju bez obzira na velika i mala slova (`hrv`, `PerCapita`).
+- **Valjana država** je svaki kod koji ima seriju ili poligon na karti. Zato rade i „included in“ teritoriji (`GUF`) i Antarktika, koja se ne crta, ali je u pretrazi. Agregati (`WLD`) se ignoriraju.
+- **Godina** mora imati točno 4 znamenke i biti u rasponu 1950–2024. `1990.5`, `1990abc` i `-1990` se ignoriraju.
+- **Nevaljane vrijednosti:** ignoriraju se bez poruke, uz zadanu vrijednost, a URL se odmah očisti s `replaceState`. Tada se uklanjaju i nepoznati parametri (npr. `utm_*`). To je prihvatljivo jer stranica nema analitiku.
+- **History:**
+  - godina, metrika i skala koriste `replaceState` s debounceom od 250 ms;
+  - otvaranje i zatvaranje države koristi `pushState`, a prije toga se u unos koji se napušta upiše svježa godina, metrika i skala;
+  - `popstate` čita URL i postavlja stanje bez novog unosa u povijest;
+  - kad Back zatvori panel, fokus se vraća na element s kojeg je panel otvoren.
+- **Prvo učitavanje:** stanje se čita iz URL-a nakon učitavanja podataka, pa se panel odmah otvara i karta zumira na državu.
+- **Base path:** mijenja se samo query string; `pathname` (`/co2-atlas/`) i hash ostaju isti.
+- **Copy link:**
+  - gumb je u zaglavlju panela i kopira `location.href` nakon što se zapiše promjena koja čeka debounce;
+  - koristi `navigator.clipboard`, a ako nije dostupan, skriveni textarea i `execCommand("copy")`;
+  - potvrda je tekst gumba „Copied“ (2 s) i poruka u `role="status"` regiji za čitače ekrana.
+
+## D11 — Panel i aktivna metrika
+
+- **Isticanje:** aktivna metrika u panelu ima akcentnu crtu s lijeve strane, podebljanu oznaku i značku „on map“, pa nije označena samo bojom.
+- **Rang** se računa za aktivnu metriku (`Rank per person` ili `World rank`). Za per capita rangiraju se samo države s populacijom (2024.: 214 od 216).
+- **Četvrto polje:**
+  - za total prikazuje „Share of world“;
+  - za per capita prikazuje „World average“, GCP-ovu globalnu per-capita vrijednost iz `aggregates.json` (svjetski total s bunkerima podijeljen sa svjetskom populacijom; 4,73 t u 2024.), uz omjer „Croatia: 1.1× the average“;
+  - vrijednost se ne računa u frontendu jer populacija nije u aplikacijskim datotekama, a GCP-ova vrijednost je službena.
+- **Tooltip** uvijek prikazuje obje vrijednosti, a aktivna je prva i podebljana.
+- **Aria-labele** država počinju aktivnom metrikom, npr. „Croatia: 4.73 t CO₂ per person in 1990, total 22.9 Mt CO₂“.
+- **Prekidač metrike** stoji ispred prekidača skale (Tab: slider → metrika → skala). Na mobitelu su oba prekidača u jednom redu, bez jedinica u oznakama, jer jedinicu daje naslov legende.
+- **Jedinice** u legendi koriste neprelomivi razmak („t CO₂“ se ne lomi).
+- **Mjerenje (isti stroj, headless Edge):**
+  - handler slidera prije i poslije: medijan 0,4 ms (per capita 0,3 ms);
+  - od tipke do iscrtavanja: medijan 16 ms prije i poslije, i za per capita;
+  - URL sinkronizacija dodaje samo `clearTimeout` i `setTimeout` po pomaku.

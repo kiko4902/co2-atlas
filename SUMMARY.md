@@ -114,7 +114,7 @@ Napomena uz zadnji red:
 
 ## Prijedlog plana za fazu 2
 
-1. **Per capita na karti** (~0,5 dana):
+1. ~~**Per capita na karti**~~ (napravljeno, vidi DECISIONS D9 i D11):
    - arhitektura je spremna: `MAP_METRICS.perCapita` s fiksnim razredima 0,5/1/2/5/10 t već postoji i testirana je;
    - treba prekidač metrike u legendi i oprez s malim državama (GCP upozorava da per capita ističe male države s lošijim podacima).
 2. **Kumulativne emisije od 1750.** (~1 dan):
@@ -127,7 +127,7 @@ Napomena uz zadnji red:
 4. **Usporedba država** (~2 dana):
    - odabir 2–5 država i indeks **1990 = 100** na jednoj osi (bez dvije y-osi);
    - boje iz kategoričke palete: najviše 3 za oblike koji uspoređuju sve parove, više uz izravne oznake.
-5. **Stanje u URL-u** (~0,5 dana):
+5. ~~**Stanje u URL-u**~~ (napravljeno, vidi DECISIONS D10):
    - `?year=1990&country=DEU&mode=relative&metric=perCapita`;
    - `history.replaceState` pri promjeni stanja; deep linkovi za dijeljenje.
 6. **Play animacija kroz godine** (~0,5 dana):

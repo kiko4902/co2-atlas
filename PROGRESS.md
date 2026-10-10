@@ -74,5 +74,19 @@ Checklist za nastavak rada u novoj sesiji. `[x]` gotovo, `[~]` djelomično, `[ ]
 | V11 | riješeno | GCB2025v15, podaci do 2024. |
 | V12 | riješeno | Programski zoom je ograničen na scaleExtent [1, 24]. |
 
+## Mala serija: per capita + stanje u URL-u
+- [x] Prekidač metrike Total / Per capita uz prekidač skale; animira se samo fill (poštuje reduced motion)
+- [x] Per capita razredi iz distribucije 1950–2024, gornji razred otvoren; outlieri dokumentirani (D9)
+- [x] Skala = f(metrika, način, godina) za obje metrike; legenda, naslov legende, tooltip i aria-labele prate metriku
+- [x] Per capita bez populacije = „No data“ (CXR, ATA)
+- [x] Panel: aktivna metrika istaknuta; rang po aktivnoj metrici; udio svijeta (total) ili svjetski prosjek per capita (D11)
+- [x] URL: country, year, metric, scale; replaceState s debounceom, pushState za državu, popstate; nevaljane vrijednosti se ignoriraju (D10)
+- [x] Gumb „Copy link“ (tipkovnica, aria-live)
+- [x] pytest: svjetski per capita u `aggregates.json` (32)
+- [x] Vitest (97): URL parse/serialize/history, per-capita skala u oba načina, rang i svjetski prosjek, outlieri u objavljenim podacima
+- [x] Playwright (31 prolaz, 15 namjerno preskočeno): dijeljeni link, nevaljani link, Back/Forward, prekidač metrike, Copy link, screenshotovi per capita
+- [x] Slider izmjeren prije i poslije (bez promjene, D11); `docs/verification.json` osvježen
+- [x] README (značajke, per-capita screenshot, „Shareable links“), DECISIONS D9–D11
+
 ## Završni izvještaj
 - [x] SUMMARY.md
