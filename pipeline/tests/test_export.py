@@ -64,3 +64,5 @@ def test_export_all_writes_every_file(tidy_frame, tmp_path):
     aggregates = json.loads((tmp_path / "aggregates.json").read_text(encoding="utf-8"))
     assert [e["iso"] for e in aggregates["entities"]] == ["XIA", "WLD"]
     assert aggregates["entities"][1]["name"] == "World"
+    # The app shows GCP's global per-capita value as the world average.
+    assert aggregates["values"]["perCapita"][0][1] == 3
