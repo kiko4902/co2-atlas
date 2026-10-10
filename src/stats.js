@@ -47,3 +47,31 @@ export function sourceShares(sources, total) {
   }
   return /** @type {Record<K, number | null>} */ (out);
 }
+
+/**
+ * How many times the world average a per-person value is (1.5 = 50 % above).
+ * The world average is GCP's global per-capita value: world total (bunkers included)
+ * divided by world population.
+ * @param {number | null | undefined} value
+ * @param {number | null | undefined} worldAverage
+ */
+export function ratioToWorld(value, worldAverage) {
+  if (value == null || worldAverage == null || worldAverage <= 0) return null;
+  return value / worldAverage;
+}
+
+/**
+ * Figures the panel shows next to the values: rank for the active metric, plus the
+ * share of the world (total) or the world average (per person).
+ * @param {object} options
+ * @param {import("./types.js").MapMetric} options.metric
+ * @param {(number | null)[]} options.values   active metric for every country, one year
+ * @param {number} options.index               the country's position in `values`
+ * @param {number | null} options.world        world value of the active metric
+ */
+export function comparison({ metric, values, index, world }) {
+  const value = values[index] ?? null;
+  const rank = rankOf(values, index);
+  if (metric === "total") return { metric, rank, share: shareOfWorld(value, world) };
+  return { metric, rank, worldAverage: world, ratio: ratioToWorld(value, world) };
+}

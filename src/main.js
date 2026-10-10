@@ -1,22 +1,24 @@
 // @ts-check
 import "./styles.css";
-import { announce, isCompactLayout } from "./a11y.js";
+import { announce, copyText, isCompactLayout } from "./a11y.js";
 import { loadDataset } from "./data.js";
 import { escapeHtml, formatMt, formatPerCapita } from "./format.js";
 import { createLegend } from "./legend.js";
 import { createMap } from "./map.js";
 import { createPanel } from "./panel.js";
-import { createColorScale } from "./scales.js";
+import { MAP_METRIC_KEYS, createColorScale } from "./scales.js";
 import { createSearch } from "./search.js";
 import { createStore } from "./state.js";
 import { STATUS_FILL } from "./theme.js";
 import { createTooltip } from "./tooltip.js";
+import { createUrlSync, parseUrlState } from "./url-state.js";
 
 /**
  * @typedef {import("./data.js").Dataset} Dataset
  * @typedef {import("./types.js").CountryFeature} CountryFeature
  * @typedef {import("./types.js").AppState} AppState
  * @typedef {import("./scales.js").ColorScale} ColorScale
+ * @typedef {import("./types.js").MapMetric} MapMetric
  */
 
 /** @param {string} id */
@@ -45,13 +47,14 @@ async function start() {
 /** @param {Dataset} dataset */
 function init(dataset) {
   const [firstYear, lastYear] = dataset.yearRange;
-  const store = createStore({
-    year: lastYear,
-    metric: "total",
-    mode: "fixed",
-    selected: null,
-    sheetExpanded: false,
-  });
+  const urlContext = {
+    yearRange: dataset.yearRange,
+    /** @param {string} iso */
+    isKnownIso: (iso) => dataset.hasData(iso) || dataset.featureByIso.has(iso),
+  };
+  // Shared links: ?country=HRV&year=1990&metric=percapita&scale=relative
+  const initial = parseUrlState(window.location.search, urlContext);
+  const store = createStore({ ...initial, sheetExpanded: false });
 
   const stage = byId("stage");
   const panelEl = byId("panel");
@@ -86,13 +89,32 @@ function init(dataset) {
 
   /** @param {CountryFeature} f */
   const labelFor = (f) => {
-    const { year } = store.get();
+    const { year, metric } = store.get();
     const name = f.properties.name;
     if (f.properties.status !== "data") return `${name}: ${statusText(f)}`;
     const total = dataset.value("total", f.properties.iso, year);
-    if (total == null) return `${name}: no data for ${year}`;
     const perCapita = dataset.value("perCapita", f.properties.iso, year);
-    return `${name}: ${formatMt(total, { unit: true })} in ${year}, ${formatPerCapita(perCapita)} per person`;
+    if (total == null && perCapita == null) return `${name}: no data for ${year}`;
+    const totalText = formatMt(total, { unit: true });
+    const perCapitaText =
+      perCapita == null ? "no per-person data" : `${formatPerCapita(perCapita)} CO₂ per person`;
+    if (metric === "perCapita") {
+      return perCapita == null
+        ? `${name}: no per-person data for ${year}, total ${totalText}`
+        : `${name}: ${perCapitaText} in ${year}, total ${totalText}`;
+    }
+    return total == null
+      ? `${name}: no total for ${year}, ${perCapitaText}`
+      : `${name}: ${totalText} in ${year}, ${perCapitaText}`;
+  };
+
+  /** Tooltip rows; the active metric is listed first. */
+  const VALUE_ROWS = {
+    total: {
+      label: "Total",
+      format: (/** @type {number | null} */ v) => formatMt(v, { unit: true }),
+    },
+    perCapita: { label: "Per person", format: formatPerCapita },
   };
 
   /**
@@ -106,14 +128,17 @@ function init(dataset) {
     if (f.properties.status !== "data") {
       body = `<p class="tt-note">${escapeHtml(statusText(f))}</p>`;
     } else {
-      const total = dataset.value("total", iso, year);
-      body =
-        total == null
-          ? `<p class="tt-note">No data for ${year}</p>`
-          : `<dl class="tt-values">
-               <dt>Total</dt><dd>${formatMt(total, { unit: true })}</dd>
-               <dt>Per person</dt><dd>${formatPerCapita(dataset.value("perCapita", iso, year))}</dd>
-             </dl>`;
+      const { metric } = store.get();
+      const order = [metric, ...MAP_METRIC_KEYS.filter((m) => m !== metric)];
+      const values = order.map((m) => dataset.value(m, iso, year));
+      body = values.every((v) => v == null)
+        ? `<p class="tt-note">No data for ${year}</p>`
+        : `<dl class="tt-values">${order
+            .map((m, i) => {
+              const active = m === metric ? ' class="is-active"' : "";
+              return `<dt${active}>${VALUE_ROWS[m].label}</dt><dd${active}>${VALUE_ROWS[m].format(values[i])}</dd>`;
+            })
+            .join("")}</dl>`;
     }
     const button = withButton
       ? `<button type="button" class="button button--small" data-details="${iso}">Show details</button>`
@@ -180,6 +205,7 @@ function init(dataset) {
     onClose: close,
     onSelect: (iso) => select(iso, { via: "keyboard" }),
     onToggleSheet: (expanded) => store.set({ sheetExpanded: expanded }),
+    onCopyLink: () => copyText(urlSync.href()),
   });
 
   byId("tooltip").addEventListener("click", (event) => {
@@ -202,12 +228,24 @@ function init(dataset) {
   // Year slider: real years as min/max/value, plus an explicit aria-valuetext.
   slider.min = String(firstYear);
   slider.max = String(lastYear);
-  slider.value = String(lastYear);
+  slider.value = String(initial.year);
   slider.addEventListener("input", () => store.set({ year: Number(slider.value) }));
   byId("year-range-start").textContent = String(firstYear);
   byId("year-range-end").textContent = String(lastYear);
 
-  for (const radio of document.querySelectorAll('input[name="scale-mode"]')) {
+  const metricRadios = /** @type {NodeListOf<HTMLInputElement>} */ (
+    document.querySelectorAll('input[name="metric"]')
+  );
+  const modeRadios = /** @type {NodeListOf<HTMLInputElement>} */ (
+    document.querySelectorAll('input[name="scale-mode"]')
+  );
+  for (const radio of metricRadios) {
+    radio.addEventListener("change", (event) => {
+      const value = /** @type {HTMLInputElement} */ (event.target).value;
+      store.set({ metric: value === "perCapita" ? "perCapita" : "total" });
+    });
+  }
+  for (const radio of modeRadios) {
     radio.addEventListener("change", (event) => {
       const value = /** @type {HTMLInputElement} */ (event.target).value;
       store.set({ mode: value === "relative" ? "relative" : "fixed" });
@@ -240,10 +278,19 @@ function init(dataset) {
     const scaleChanged = changed.has("year") || changed.has("mode") || changed.has("metric");
     if (scaleChanged) {
       scale = makeScale(s);
-      // Animate only a change of scale mode; slider moves update instantly.
-      map.updateFills(fillFor, { animate: changed.has("mode") && !changed.has("year") });
+      // Animate a change of metric or scale mode; slider moves update instantly.
+      const animate = (changed.has("mode") || changed.has("metric")) && !changed.has("year");
+      map.updateFills(fillFor, { animate });
       legend.update(scale);
       map.updateLabels(labelFor);
+    }
+    if (changed.has("metric")) {
+      for (const radio of metricRadios) radio.checked = radio.value === s.metric;
+      panel.setMetric(s.metric);
+      if (tooltip.pinned) tooltip.hide();
+    }
+    if (changed.has("mode")) {
+      for (const radio of modeRadios) radio.checked = radio.value === s.mode;
     }
     if (changed.has("year")) {
       renderYear(s);
@@ -269,7 +316,23 @@ function init(dataset) {
   }
 
   store.subscribe(render);
-  render(store.get(), new Set(["year", "mode", "metric"]));
+  /** @type {Set<keyof AppState>} */
+  const firstRender = new Set(["year", "mode", "metric"]);
+  if (initial.selected) firstRender.add("selected");
+  render(store.get(), firstRender);
+
+  const urlSync = createUrlSync({
+    store,
+    context: urlContext,
+    onRestore() {
+      tooltip.hide();
+      // Back/Forward closed the panel: give focus back if it was lost with the panel.
+      if (store.get().selected) return;
+      const lost = !document.activeElement || document.activeElement === document.body;
+      if (lost && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+      returnFocus = null;
+    },
+  });
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape" || event.defaultPrevented) return;

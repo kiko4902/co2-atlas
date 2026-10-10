@@ -40,3 +40,35 @@ export function normalize(text) {
 export function isCompactLayout() {
   return window.matchMedia("(max-width: 720px)").matches;
 }
+
+/**
+ * Copy text to the clipboard. Falls back to a hidden textarea where the async
+ * Clipboard API is unavailable or denied. Focus is returned to where it was.
+ * @param {string} text
+ * @returns {Promise<boolean>}
+ */
+export async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // fall through to the legacy path
+  }
+  const active = /** @type {HTMLElement | null} */ (document.activeElement);
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.append(area);
+  area.select();
+  let ok;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+  area.remove();
+  active?.focus({ preventScroll: true });
+  return ok;
+}

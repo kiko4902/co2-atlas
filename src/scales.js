@@ -23,21 +23,32 @@ import { RAMP, STATUS_FILL } from "./theme.js";
  * @property {(value: number | null | undefined) => string} fill
  */
 
-/** Unit and fixed class boundaries per map metric. */
+/** Labels, units and fixed class boundaries per map metric. */
 export const MAP_METRICS = {
   total: {
     label: "Fossil CO₂ emissions",
-    unit: "Mt CO₂",
+    short: "Total",
+    unit: "Mt\u00a0CO₂", // no-break space
+    zeroLabel: "0 Mt",
     // Decades of Mt. Chosen from the 1950–2024 distribution of country values:
     // p10 ≈ 0.09, p40 ≈ 2.2, p60 ≈ 10, p80 ≈ 56, p99 ≈ 1,700 (see DECISIONS.md, D6).
     fixedThresholds: [0.1, 1, 10, 100, 1000],
   },
   perCapita: {
-    label: "Fossil CO₂ per person",
-    unit: "t CO₂ per person",
-    fixedThresholds: [0.5, 1, 2, 5, 10],
+    label: "Fossil CO₂ emissions per person",
+    short: "Per person",
+    unit: "t\u00a0CO₂",
+    zeroLabel: "0 t",
+    // 1950–2024 country values: p30 ≈ 0.58, p40 ≈ 1.1, p60 ≈ 3.3, p70 ≈ 5.1, p90 ≈ 11.
+    // Classes hold 28/11/16/14/18/13 % of them. The top class is open-ended, so
+    // oil states and tiny islands (Sint Maarten 1950s: 790 t) do not stretch the
+    // scale (see DECISIONS.md, D9).
+    fixedThresholds: [0.5, 1, 2.5, 5, 10],
   },
 };
+
+/** @type {MapMetric[]} */
+export const MAP_METRIC_KEYS = ["total", "perCapita"];
 
 export const CLASS_COUNT = RAMP.length;
 

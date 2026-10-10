@@ -1,13 +1,23 @@
 // @ts-check
 import { createSourceBars } from "./charts/source-bars.js";
 import { createStackedArea } from "./charts/stacked-area.js";
-import { escapeHtml, formatMt, formatPerCapita, formatRank, formatShare } from "./format.js";
-import { rankOf, shareOfWorld, sourceShares } from "./stats.js";
+import {
+  escapeHtml,
+  formatMt,
+  formatPerCapita,
+  formatRank,
+  formatRatio,
+  formatShare,
+} from "./format.js";
+import { comparison, sourceShares } from "./stats.js";
 import { SOURCES } from "./theme.js";
 
 /**
  * @typedef {import("./data.js").Dataset} Dataset
+ * @typedef {import("./types.js").MapMetric} MapMetric
  */
+
+const COPY_RESET_MS = 2000;
 
 /**
  * Country details. Built once; `show` swaps the country, `setYear` only updates
@@ -18,8 +28,9 @@ import { SOURCES } from "./theme.js";
  * @param {() => void} options.onClose
  * @param {(iso: string) => void} options.onSelect   open another country (e.g. "included in")
  * @param {(expanded: boolean) => void} options.onToggleSheet
+ * @param {() => Promise<boolean>} options.onCopyLink  copies the current URL; false on failure
  */
-export function createPanel({ root, dataset, onClose, onSelect, onToggleSheet }) {
+export function createPanel({ root, dataset, onClose, onSelect, onToggleSheet, onCopyLink }) {
   /** @param {string} selector */
   const $ = (selector) => /** @type {HTMLElement} */ (root.querySelector(selector));
   const title = $("[data-panel-title]");
@@ -29,7 +40,11 @@ export function createPanel({ root, dataset, onClose, onSelect, onToggleSheet })
   const statTotal = $("[data-stat-total]");
   const statPerCapita = $("[data-stat-percapita]");
   const statRank = $("[data-stat-rank]");
-  const statShare = $("[data-stat-share]");
+  const statRankLabel = $("[data-stat-rank-label]");
+  const statExtra = $("[data-stat-extra]");
+  const statExtraLabel = $("[data-stat-extra-label]");
+  const copyButton = /** @type {HTMLButtonElement} */ ($("[data-copy-link]"));
+  const copyStatus = $("[data-copy-status]");
   const sourcesTitle = $("[data-sources-title]");
   const sourcesNote = $("[data-sources-note]");
   const chartTitle = $("[data-chart-title]");
@@ -47,6 +62,33 @@ export function createPanel({ root, dataset, onClose, onSelect, onToggleSheet })
   /** @type {string | null} */
   let iso = null;
   let year = dataset.yearRange[1];
+  /** @type {MapMetric} */
+  let metric = "total";
+  let copyTimer = 0;
+
+  copyButton.addEventListener("click", async () => {
+    const ok = await onCopyLink();
+    copyButton.textContent = ok ? "Copied" : "Copy failed";
+    copyStatus.textContent = ok
+      ? "Link copied to the clipboard."
+      : "The link could not be copied. Copy it from the address bar.";
+    window.clearTimeout(copyTimer);
+    copyTimer = window.setTimeout(() => {
+      copyButton.textContent = "Copy link";
+      copyStatus.textContent = "";
+    }, COPY_RESET_MS);
+  });
+
+  function renderMetric() {
+    for (const el of root.querySelectorAll("[data-stat]")) {
+      const active = /** @type {HTMLElement} */ (el).dataset.stat === metric;
+      el.classList.toggle("is-active", active);
+      /** @type {HTMLElement} */ (el.querySelector(".stat-badge")).hidden = !active;
+    }
+    statRankLabel.textContent = metric === "total" ? "World rank" : "Rank per person";
+    statExtraLabel.textContent = metric === "total" ? "Share of world" : "World average";
+  }
+  renderMetric();
 
   /** @type {HTMLButtonElement} */ ($("[data-panel-close]")).addEventListener("click", onClose);
   sheetToggle.addEventListener("click", () => {
@@ -64,8 +106,24 @@ export function createPanel({ root, dataset, onClose, onSelect, onToggleSheet })
     subtitle.textContent = `Fossil CO₂ emissions in ${year}`;
     statTotal.textContent = formatMt(row.total);
     statPerCapita.textContent = formatPerCapita(row.perCapita);
-    statRank.textContent = formatRank(rankOf(dataset.row("total", year), index));
-    statShare.textContent = formatShare(shareOfWorld(row.total, dataset.world("total", year)));
+    const figures = comparison({
+      metric,
+      values: dataset.row(metric, year),
+      index,
+      world: dataset.world(metric, year),
+    });
+    statRank.textContent = formatRank(figures.rank);
+    if ("share" in figures) {
+      statExtra.textContent = formatShare(figures.share);
+    } else {
+      statExtra.textContent = formatPerCapita(figures.worldAverage);
+      if (figures.ratio != null) {
+        const sub = document.createElement("span");
+        sub.className = "stat-sub";
+        sub.textContent = `${dataset.name(iso)}: ${formatRatio(figures.ratio)} the average`;
+        statExtra.append(sub);
+      }
+    }
 
     /** @type {Record<string, number | null>} */
     const values = {};
@@ -128,6 +186,12 @@ export function createPanel({ root, dataset, onClose, onSelect, onToggleSheet })
           `Total in ${dataset.yearRange[1]}: ${formatMt(last, { unit: true })}. Use the arrow keys to read single years.`,
       );
       renderNumbers();
+    },
+    /** @param {MapMetric} nextMetric */
+    setMetric(nextMetric) {
+      metric = nextMetric;
+      renderMetric();
+      if (!root.hidden) renderNumbers();
     },
     /** @param {number} nextYear */
     setYear(nextYear) {

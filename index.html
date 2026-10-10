@@ -67,13 +67,36 @@
         <h2 id="legend-title" class="legend-title" data-legend-title>
           Fossil CO₂ emissions, Mt CO₂
         </h2>
-        <fieldset class="segmented">
-          <legend class="visually-hidden">Colour scale</legend>
-          <input type="radio" id="mode-fixed" name="scale-mode" value="fixed" checked />
-          <label for="mode-fixed">Fixed scale</label>
-          <input type="radio" id="mode-relative" name="scale-mode" value="relative" />
-          <label for="mode-relative">Relative to year</label>
-        </fieldset>
+        <div class="legend-toggles">
+          <fieldset class="segmented">
+            <legend class="visually-hidden">Metric</legend>
+            <input type="radio" id="metric-total" name="metric" value="total" checked />
+            <label for="metric-total"
+              >Total
+              <span class="segmented-unit"
+                ><span class="visually-hidden">(</span>Mt CO₂<span class="visually-hidden"
+                  >)</span
+                ></span
+              ></label
+            >
+            <input type="radio" id="metric-percapita" name="metric" value="perCapita" />
+            <label for="metric-percapita"
+              >Per capita
+              <span class="segmented-unit"
+                ><span class="visually-hidden">(</span>t CO₂ per person<span class="visually-hidden"
+                  >)</span
+                ></span
+              ></label
+            >
+          </fieldset>
+          <fieldset class="segmented">
+            <legend class="visually-hidden">Colour scale</legend>
+            <input type="radio" id="mode-fixed" name="scale-mode" value="fixed" checked />
+            <label for="mode-fixed">Fixed scale</label>
+            <input type="radio" id="mode-relative" name="scale-mode" value="relative" />
+            <label for="mode-relative">Relative to year</label>
+          </fieldset>
+        </div>
         <ul class="legend-classes" data-legend-classes></ul>
         <ul class="legend-status" data-legend-status></ul>
         <p class="legend-note" data-legend-note></p>
@@ -96,6 +119,10 @@
           </button>
           <h2 id="panel-title" tabindex="-1" data-panel-title></h2>
           <p class="panel-subtitle" data-panel-subtitle></p>
+          <div class="panel-share">
+            <button type="button" class="button button--small" data-copy-link>Copy link</button>
+            <span class="visually-hidden" data-copy-status role="status" aria-live="polite"></span>
+          </div>
           <button
             type="button"
             class="icon-button panel-close"
@@ -111,21 +138,21 @@
           <div class="panel-notice" data-panel-notice hidden></div>
           <div data-panel-details>
             <dl class="stats">
-              <div class="stat">
-                <dt>Total</dt>
+              <div class="stat" data-stat="total">
+                <dt>Total <span class="stat-badge" hidden>on map</span></dt>
                 <dd data-stat-total></dd>
               </div>
-              <div class="stat">
-                <dt>Per person</dt>
+              <div class="stat" data-stat="perCapita">
+                <dt>Per person <span class="stat-badge" hidden>on map</span></dt>
                 <dd data-stat-percapita></dd>
               </div>
               <div class="stat">
-                <dt>World rank</dt>
+                <dt data-stat-rank-label>World rank</dt>
                 <dd data-stat-rank></dd>
               </div>
               <div class="stat">
-                <dt>Share of world</dt>
-                <dd data-stat-share></dd>
+                <dt data-stat-extra-label>Share of world</dt>
+                <dd data-stat-extra></dd>
               </div>
             </dl>
             <section class="panel-section">
@@ -196,10 +223,13 @@
             territory is not reported on its own.
           </li>
           <li>
-            Per person values and populations come from the Global Carbon Project (UN population
-            data). Shares of the world use the global total, which includes international aviation
-            and shipping. Those are not assigned to any country, so country shares add up to less
-            than 100%.
+            <strong>Per capita</strong> shows tonnes of CO₂ per person. Values and populations come
+            from the Global Carbon Project (UN population data). Very small populations with
+            refineries or oil and gas production (for example Sint Maarten in the 1950s, Qatar or
+            Curaçao) can reach tens or hundreds of tonnes; they fall into the open top class. The
+            world average is the global total, including aviation and shipping, per person. Shares
+            of the world use the global total, which includes international aviation and shipping.
+            Those are not assigned to any country, so country shares add up to less than 100%.
           </li>
         </ul>
 

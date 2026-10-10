@@ -65,6 +65,17 @@ export function formatShare(fraction) {
 }
 
 /**
+ * A multiple of a reference value: 1.2×, 0.45×, 12×.
+ * @param {number | null | undefined} ratio
+ */
+export function formatRatio(ratio) {
+  if (ratio == null || Number.isNaN(ratio)) return NO_DATA;
+  if (ratio === 0) return "0×";
+  if (ratio < 0.01) return "<0.01×";
+  return `${ratio >= 10 ? fixed0(ratio) : sig2(ratio)}×`;
+}
+
+/**
  * @param {{ rank: number, count: number } | null} rank
  */
 export function formatRank(rank) {

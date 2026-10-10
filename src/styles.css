@@ -342,6 +342,17 @@ a:hover {
   outline-offset: 1px;
 }
 
+.segmented + .segmented {
+  margin-top: -4px;
+}
+
+.segmented-unit {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 10.5px;
+  font-weight: 400;
+}
+
 .legend-classes,
 .legend-status {
   margin: 0;
@@ -435,8 +446,12 @@ a:hover {
 .tt-values dd {
   margin: 0;
   text-align: right;
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.tt-values .is-active {
+  color: var(--ink);
+  font-weight: 650;
 }
 
 .tt-note {
@@ -599,6 +614,50 @@ a:hover {
   font-size: 20px;
   font-weight: 650;
   letter-spacing: -0.01em;
+}
+
+/* The metric shown on the map. */
+.stat.is-active {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.stat.is-active dt {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.stat-badge {
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--plane);
+  color: var(--ink-2);
+  font-size: 10.5px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+
+.stat-badge[hidden] {
+  display: none;
+}
+
+.stat-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.panel-share {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-share .button--small {
+  margin-top: 8px;
 }
 
 .panel-section + .panel-section {
@@ -1027,6 +1086,26 @@ a:hover {
 
   .segmented {
     margin-bottom: 6px;
+  }
+
+  /* Metric and scale side by side; the legend title carries the unit. */
+  .legend-toggles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .segmented + .segmented {
+    margin-top: 0;
+  }
+
+  .segmented label {
+    padding: 4px 2px;
+    font-size: 11px;
+  }
+
+  .segmented-unit {
+    display: none;
   }
 
   /* Bottom sheet: half the screen, expandable. The map stays visible above it. */

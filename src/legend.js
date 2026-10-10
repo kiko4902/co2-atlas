@@ -7,7 +7,7 @@ import { STATUS_FILL } from "./theme.js";
  */
 
 const STATUS_ITEMS = [
-  { key: "zero", label: "0 Mt", swatch: `background:${STATUS_FILL.zero}` },
+  { key: "zero", label: MAP_METRICS.total.zeroLabel, swatch: `background:${STATUS_FILL.zero}` },
   { key: "nodata", label: "No data", swatch: `background:${STATUS_FILL.nodata}` },
   { key: "none", label: "No separate data", swatch: "", className: "swatch--hatch" },
 ];
@@ -29,9 +29,13 @@ export function createLegend(root) {
       const li = document.createElement("li");
       li.className = "legend-item";
       li.dataset.status = item.key;
-      li.innerHTML = `<span class="swatch ${item.className ?? ""}" style="${item.swatch}" aria-hidden="true"></span><span>${item.label}</span>`;
+      li.innerHTML = `<span class="swatch ${item.className ?? ""}" style="${item.swatch}" aria-hidden="true"></span><span data-label>${item.label}</span>`;
       return li;
     }),
+  );
+
+  const zeroLabel = /** @type {HTMLElement} */ (
+    status.querySelector('[data-status="zero"] [data-label]')
   );
 
   /** @type {string} */
@@ -43,7 +47,9 @@ export function createLegend(root) {
       const key = `${scale.metric}|${scale.mode}|${scale.thresholds.join(",")}|${scale.description}`;
       if (key === lastKey) return;
       lastKey = key;
-      title.textContent = `${MAP_METRICS[scale.metric].label}, ${MAP_METRICS[scale.metric].unit}`;
+      const config = MAP_METRICS[scale.metric];
+      title.textContent = `${config.label}, ${config.unit}`;
+      zeroLabel.textContent = config.zeroLabel;
       note.textContent = scale.description;
       classes.replaceChildren(
         ...scale.labels.map((label, i) => {
